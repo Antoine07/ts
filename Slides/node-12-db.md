@@ -90,29 +90,38 @@ Effet pratique :
 
 ---
 
-# Comment corriger une erreur Zod (méthode)
+# Que fait `flatten().fieldErrors` ?
 
-1. lire le champ en erreur (`DB_PORT`, `DB_NAME`, ...)
-2. vérifier la source (Docker Compose, `.env`, CI)
-3. corriger le type/valeur (ex: `DB_PORT=5432`, pas `"abc"`)
-4. relancer et revalider
+`parsedEnv.error.flatten().fieldErrors` retourne un objet simple :
+- clé = nom du champ invalide
+- valeur = liste des messages d'erreur pour ce champ
 
-Objectif : corriger la cause, pas contourner Zod.
+Exemple :
+
+```ts
+{
+  DB_PORT: ["Invalid input: expected number, received NaN"],
+  DB_NAME: ["Too small: expected string to have >=1 characters"]
+}
+```
+
+Pratique pour logger et corriger vite la config.
 
 ---
 
-# Réflexe rapide (Zod KO)
+# Corriger vite une erreur Zod (env)
 
-- lire le champ en erreur
-- corriger la config/entrée
-- relancer
+Méthode simple :
+1. lire le champ en erreur (`DB_PORT`, `DB_NAME`, ...)
+2. corriger la source (`docker-compose`, `.env`, CI)
+3. relancer l'app
 
 Règle :
-> pas de `as any`, pas de contournement du schéma.
+> corriger la cause, ne jamais contourner (`as any`, suppression du schéma).
 
 ---
 
-# Router : validation simple d'abord (2e année)
+# Router : validation simple 
 
 Pour une entrée HTTP invalide :
 - `400` si format/paramètre invalide
@@ -129,14 +138,13 @@ if (!Number.isInteger(movieId) || movieId <= 0) {
 
 ---
 
-# Place de la validation (version simple)
+# Place de la validation 
 
 Architecture recommandée :
 - `config.ts` : Zod pour valider `process.env`
 - `router.ts` : checks explicites (`if`, `Number.isInteger`)
 - `Infrastructure/*Repository.ts` : pas de validation, uniquement DB
 
-Message clé :
 > Commencer simple : Zod pour `env`, validations claires dans le router.
 
 ---
@@ -170,7 +178,7 @@ Règle stable :
 
 ---
 
-# Connexion : un `Pool` unique
+# Connexion : un `Pool` unique 1/2
 
 ```ts
 import { Pool } from "pg";
@@ -184,6 +192,11 @@ export const pool = new Pool({
   database: env.DB_NAME,
 });
 ```
+
+---
+
+# Connexion : un `Pool` unique 2/2
+
 
 Pourquoi un `Pool` ?
 - réutilise les connexions
@@ -232,7 +245,7 @@ export class MovieRepository {
 
 ---
 
-# Exemple métier : séances d’un film
+# Exemple métier : séances d'un film 1/2
 
 ```ts
 export type Screening = {
@@ -254,7 +267,12 @@ export class ScreeningRepository {
 }
 ```
 
-Le `::text` permet d’éviter de gérer des conversions de dates au début.
+---
+
+# Exemple métier : séances d'un film 2/2
+
+
+Le `::text` permet d'éviter de gérer des conversions de dates au début.
 
 ---
 
@@ -299,7 +317,7 @@ Bon réflexe :
 
 ---
 
-# Healthcheck DB (très utile)
+# Healthcheck DB - c'est pratique non ?
 
 Endpoint interne :
 - `GET /health/db` fait un `select 1`
@@ -317,4 +335,3 @@ Utile pour Docker / supervision / diagnostics.
 - Repositories pour séparer HTTP et DB
 - Commencer simple : Zod sur `env`, checks manuels dans router
 
----
