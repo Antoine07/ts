@@ -10,33 +10,27 @@ title: "Node.js — 14 Drizzle ORM pour faire évoluer le TP Movie"
 # 14 — Drizzle ORM
 ## Évolution du TP Movie (sans casser l'architecture)
 
----
-
-# Objectif du chapitre
-
-- Partir du TP Movie actuel (PG + repositories)
-- Introduire Drizzle progressivement
-- Garder `Domain / Infrastructure / router`
-- Migrer les requêtes SQL vers Drizzle
 
 ---
 
-# Mini intro historique (ORM)
+# historique ORM - Object Relation Mapping
 
 Repères rapides :
 - années 2000 : forte adoption des ORM (Hibernate, ActiveRecord, Doctrine)
-- problème visé : éviter le “tout SQL string” dispersé
+- problème visé : éviter le "tout SQL string" dispersé
 - idée : mapper tables/relations vers un modèle manipulable en code
 
 Aujourd'hui :
 - certains ORM sont très abstraits
 - Drizzle est plutôt **SQL-first** et garde le contrôle SQL
 
+`SQL-first` : approche où le modèle SQL (tables, colonnes, contraintes, relations) est la source de vérité, et le code applicatif s'aligne dessus.
+
 ---
 
-# Pourquoi utiliser un ORM ici ?
+# Pourquoi utiliser un ORM 
 
-Dans une app comme TP Movie, un ORM apporte :
+Dans une app comme l'application que vous développez `cinéConnect`, un ORM apporte :
 - typage fort entre DB et TypeScript
 - requêtes composables sans concaténation fragile
 - moins d'erreurs de colonnes/champs renommés
@@ -48,7 +42,7 @@ Mais :
 
 ---
 
-# Relations SQL dans notre contexte
+# Relations SQL dans notre contexte du tp du cours 
 
 Tables :
 - `movies`
@@ -84,13 +78,13 @@ Le design REST reflète directement le modèle relationnel.
 
 ---
 
-# Drizzle et les relations (techniquement)
+# Drizzle et les relations 
 
-Niveau 1 (déjà suffisant dans le TP) :
+Niveau 1  :
 - requêtes explicites avec `innerJoin(...)`
 
-Niveau 2 (optionnel) :
-- déclarer les relations Drizzle (`relations(...)`) pour une API encore plus guidée
+Niveau 2  :
+- déclarer les relations Drizzle (`relations(...)`) pour une API
 
 Les deux approches sont correctes ; on commence par le niveau 1.
 
@@ -121,7 +115,7 @@ Le TP actuel :
 - `MovieRepository` et `ScreeningRepository` font le SQL
 - `pg.Pool` gère la connexion
 
-Bonne nouvelle : on garde cette structure.
+>Bonne nouvelle : on garde cette structure.
 
 ---
 
@@ -132,7 +126,7 @@ Bonne nouvelle : on garde cette structure.
 - On réécrit les repositories avec `db.select(...)`
 - Le `router` ne change presque pas
 
-But : faire évoluer le TP, pas le réécrire.
+>But : faire évoluer le TP, pas le réécrire.
 
 ---
 
@@ -145,7 +139,7 @@ npm i -D drizzle-kit
 
 ---
 
-# `Infrastructure/schema.ts` (aligné TP Movie)
+# `Infrastructure/schema.ts` 
 
 ```ts
 import { pgTable, serial, text, integer, date, timestamp, numeric } from "drizzle-orm/pg-core";
@@ -201,12 +195,14 @@ import { asc } from "drizzle-orm";
 import { db } from "./drizzle.js";
 import { movies } from "./schema.js";
 
-const items = await db
-  .select()
-  .from(movies)
-  .orderBy(asc(movies.id));
+export async function listMovies() {
+  const items = await db
+    .select()
+    .from(movies)
+    .orderBy(asc(movies.id));
 
-return items;
+  return items;
+}
 ```
 
 ---
@@ -214,31 +210,41 @@ return items;
 # Migration repository `ScreeningRepository`
 
 ```ts
-import { eq, asc } from "drizzle-orm";
-import { db } from "./drizzle.js";
-import { screenings, rooms } from "./schema.js";
+// ...
+export async function listScreeningsByMovieId(movieId: number) {
+  const rows = await db
+    .select({
+      id: screenings.id,
+      movieId: screenings.movieId,
+      startTime: screenings.startTime,
+      price: screenings.price,
+      roomId: rooms.id,
+      roomName: rooms.name,
+      roomCapacity: rooms.capacity,
+    })
+    .from(screenings)
+    .innerJoin(rooms, eq(rooms.id, screenings.roomId))
+    .where(eq(screenings.movieId, movieId))
+    .orderBy(asc(screenings.startTime));
 
-const rows = await db
-  .select({
-    id: screenings.id,
-    movieId: screenings.movieId,
-    startTime: screenings.startTime,
-    price: screenings.price,
-    roomId: rooms.id,
-    roomName: rooms.name,
-    roomCapacity: rooms.capacity,
-  })
-  .from(screenings)
-  .innerJoin(rooms, eq(rooms.id, screenings.roomId))
-  .where(eq(screenings.movieId, movieId))
-  .orderBy(asc(screenings.startTime));
+  return rows;
+}
 ```
-
-Puis on mappe vers le type `Screening` du Domain.
 
 ---
 
-# Optionnel : déclarer les relations Drizzle
+Puis on mappe vers le type `Screening` du Domain, voir la slide suivante
+
+---
+
+```js
+export async function listScreeningsByMovieId(movieId: number):  Promise<Screening[]>
+{}
+```
+
+---
+
+# Déclarer les relations Drizzle
 
 ```ts
 import { relations } from "drizzle-orm";
@@ -253,7 +259,7 @@ export const screeningsRelations = relations(screenings, ({ one }) => ({
 }));
 ```
 
-Utile surtout quand l'app grossit (queries relationnelles plus riches).
+>Utile surtout quand l'app grossit (queries relationnelles plus riches).
 
 ---
 
@@ -268,25 +274,6 @@ On change surtout l'Infrastructure.
 
 ---
 
-# Migrations Drizzle : quand les introduire ?
-
-Deux stratégies :
-- TP court : garder `schema.sql` manuel (simple)
-- TP évolué : introduire `drizzle-kit` + migrations versionnées
-
-Le cours recommande stratégie 1 puis 2.
-
----
-
-# Plan d'évolution concret (TP)
-
-1. garder routes GET actuelles
-2. basculer les repositories en Drizzle
-3. valider que les réponses JSON ne changent pas
-4. seulement après, ajouter de nouveaux endpoints
-
----
-
 # Pattern de structure conseillé
 
 - `Infrastructure/DB.ts` : `Pool`
@@ -297,11 +284,3 @@ Le cours recommande stratégie 1 puis 2.
 - `router.ts` : routes API
 
 Même architecture, outil de DB amélioré.
-
----
-
-# À retenir
-
-- Drizzle s'intègre sans casser le TP Movie
-- priorité : migrer l'Infrastructure proprement
-- ensuite : faire évoluer l'API avec les verbes REST

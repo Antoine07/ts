@@ -4,10 +4,10 @@ Ce TP consiste a construire une mini API HTTP qui expose :
 - la liste des films
 - les seances d'un film
 
-Objectif pedagogique : travailler une architecture simple, lisible, et proche d'une vraie app avec separation **Domain / Infrastructure / Router**.
+Objectif : travailler une architecture simple, lisible, et proche d'une vraie application, avec separation **Domain / Infrastructure / Router**.
 
 ```txt
-# Commentaire: structure cible pour demarrer rapidement (version simple 2e annee)
+# Structure cible (version simple, 2e annee)
 TPs/Movie/
   Domain/
     Movie.ts
@@ -27,6 +27,10 @@ TPs/Movie/
 - Docker + Docker Compose
 - VS Code (recommande)
 
+## Un schéma mental avec Drizzle vu en deuxième partie
+
+![Abstraction ORM](./images/orm-abstraction-flow.png)
+
 ## Contexte technique
 
 Ce TP se base sur :
@@ -34,23 +38,25 @@ Ce TP se base sur :
 - `pg` (PostgreSQL)
 - TypeScript strict
 
-Les donnees viennent d'une base PostgreSQL initialisee par `TPs/Movie/schema.sql`.
+Les donnees proviennent d'une base PostgreSQL initialisee par `TPs/Movie/schema.sql`.
 
 ## Regle importante (a respecter)
 
-**Partie 1 obligatoire : sans Drizzle.**
+**Partie 1 : sans Drizzle.**
 
-Pendant cette premiere partie, vous utilisez uniquement :
+Durant cette premiere partie, vous utilisez uniquement :
 - `pg.Pool`
 - des repositories SQL parametrises
 - un `router.ts` simple
 - `zod` pour valider les frontieres runtime
 
-Drizzle est une evolution optionnelle en Partie 2.
+Rappel utile :
+- Frontieres runtime = endroits ou des donnees externes entrent dans l'application et ou TypeScript ne peut pas garantir la validite.
+- Exemples : `process.env`, params/query/body HTTP, JSON fichier, reponse API externe, resultat DB.
 
-## Structure imposee
+## Structure proposee
 
-Vous travaillez dans `TPs/Movie/` avec :
+Vous travaillez dans le dossier `starter/src` avec :
 
 - `Domain/`
   - `Movie.ts`
@@ -63,13 +69,13 @@ Vous travaillez dans `TPs/Movie/` avec :
 - `server.ts`
 - `schema.sql`
 
-Regle : **pas de SQL dans le router ni dans server.ts**. Le SQL reste dans `Infrastructure/*Repository.ts`.
+Regle : **pas de SQL dans `router.ts` ni dans `server.ts`**. Le SQL reste dans `Infrastructure/*Repository.ts`.
 
-## Schema UML (tables + relations)
+## Schema UML
 
 ![Schema UML tables Movie](./images/movie-schema.png)
 
-## Mise en route (mode application)
+## Mise en route
 
 1. Lancer les conteneurs :
 
@@ -105,17 +111,17 @@ npm run dev
 
 L'API est exposee sur `http://localhost:3001`.
 
-## Plan de realisation conseille (Partie 1)
+## Plan de realisation conseille
 
-1. Completer les types Domain.
+1. Completer les types Domain : `Movie` et `Screening`.
 2. Completer `Infrastructure/DB.ts` (connexion `Pool`).
 3. Completer `MovieRepository.list()`.
 4. Completer `ScreeningRepository.listByMovieId(movieId)`.
-5. Completer `router.ts` avec `sendJson`, `sendError`, validations, et routes.
+5. Completer `router.ts` avec `sendJson`, `sendError`, validations et routes.
 6. Brancher le router dans `server.ts`.
-7. Tester au fur et a mesure avec `curl`.
+7. Tester au fur et a mesure avec `curl` ou Insomnia.
 
-##  Domain : types a definir
+## Domain : types a definir
 
 ### `Domain/Movie.ts`
 
@@ -136,12 +142,14 @@ Type attendu :
 - `price: number`
 - `room: { id: number; name: string; capacity: number }`
 
-##  Infrastructure : connexion PostgreSQL
+Definition courte : `Screening` = une seance de projection d'un film.
+
+## Infrastructure : connexion PostgreSQL
 
 Dans `Infrastructure/DB.ts`, creer un `Pool` avec les variables :
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 
-Exemple court :
+Exemple :
 
 ```ts
 import { Pool } from "pg";
@@ -162,7 +170,7 @@ const result = await pool.query<{ now: string }>("select now() as now");
 console.log(result.rows[0]?.now);
 ```
 
-##  Validation : mini exemple Zod (court)
+## Validation (zod)
 
 Ne pas utiliser Zod dans les repositories SQL.
 
@@ -190,7 +198,7 @@ const parsed = MovieIdSchema.safeParse(segments[1]);
 if (!parsed.success) return sendError(res, 400, "Invalid movie id");
 ```
 
-##  Infrastructure : repositories
+## Infrastructure : repositories
 
 ### `MovieRepository.list()`
 
@@ -205,7 +213,7 @@ select
   description,
   duration_minutes as "durationMinutes",
   rating,
-  release_date::text as "releaseDate"
+  release_date::text as "releaseDate" -- syntaxe Postgres
 from movies
 order by id asc;
 ```
@@ -231,9 +239,9 @@ where s.movie_id = $1
 order by s.start_time asc;
 ```
 
-Important : toujours parametrer les entrees utilisateur (`$1`).
+> Important : parametrez toujours les entrees utilisateur (`$1`, `$2`, ...) pour vous premunir des injections SQL.
 
-##  Router : routes HTTP (avec exemples courts)
+## Router : routes HTTP
 
 Routes minimales a implementer :
 - `GET /health` -> `{ ok: true }`
@@ -279,42 +287,7 @@ function sendError(res: ServerResponse, status: number, message: string): void {
 }
 ```
 
-### Parsing de route (idee)
-
-```ts
-const method = req.method ?? "GET";
-const [path] = (req.url ?? "/").split("?", 2);
-const segments = (path ?? "/").split("/").filter(Boolean);
-```
-
-Vous pouvez aussi typer explicitement :
-
-```ts
-const method: string = req.method ?? "GET";
-const [path = "/"] = (req.url ?? "/").split("?", 2);
-const segments: string[] = path.split("/").filter(Boolean);
-```
-
-### Parsing de `movieId` (idee)
-
-```ts
-const movieId = Number(segments[1]);
-if (!Number.isInteger(movieId) || movieId <= 0) {
-  return sendError(res, 400, "Invalid movie id");
-}
-```
-
-Version plus propre (helper type-safe) :
-
-```ts
-function parsePositiveInt(value: string | undefined): number | null {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n <= 0) return null;
-  return n;
-}
-```
-
-Version avec Zod (recommandee) :
+### Parsing de route avec Zod (exemple)
 
 ```ts
 const parsedMovieId = MovieIdSchema.safeParse(segments[1]);
@@ -324,7 +297,7 @@ if (!parsedMovieId.success) {
 const movieId = parsedMovieId.data;
 ```
 
-### Exemple de branche de route
+### Gestion de branche de route (exemple)
 
 ```ts
 if (method === "GET" && path === "/movies") {
@@ -340,9 +313,20 @@ Erreurs a gerer :
 
 Conseil typing : faire retourner `Promise<void>` au router et `void` aux helpers `sendJson/sendError`.
 
-##  `server.ts` : brancher le router
+## `server.ts` : brancher le router
 
-Role de `server.ts` : instancier les repos et deleguer au router.
+Role de `server.ts` : instancier les repositories et brancher le router.
+
+Si vous voulez aller plus loin :
+- le router peut deleguer a des controllers
+- les controllers deleguent ensuite a la couche Application
+
+Dans ce cas, ajoutez un dossier `Application/` et un dossier `Controllers/`.
+
+Separation propre : `Router -> Controllers -> Application -> Infrastructure`.
+
+- `Application` = logique metier (use cases), sans dependance HTTP.
+- `Controllers` = couche transport HTTP (status code, req/res).
 
 Exemple court :
 
@@ -355,7 +339,7 @@ const server = createServer(async (req, res) => {
 });
 ```
 
-## Tests manuels (curl)
+## Tests manuels (`curl` ou Insomnia)
 
 ```bash
 curl -s http://localhost:3001/health
@@ -363,14 +347,14 @@ curl -s http://localhost:3001/movies
 curl -s http://localhost:3001/movies/1/screenings
 ```
 
-Tests erreur utiles :
+Tests d'erreur utiles :
 
 ```bash
 curl -s http://localhost:3001/movies/abc/screenings
 curl -s http://localhost:3001/unknown
 ```
 
-## Critere de validation (Partie 1)
+## Criteres de validation
 
 - structure des fichiers respectee
 - SQL uniquement dans les repositories
@@ -381,9 +365,9 @@ curl -s http://localhost:3001/unknown
 
 ---
 
-## Partie 2 (optionnelle) : evolution vers Drizzle
+## Partie 2 : evolution vers Drizzle (apres le cours Drizzle)
 
-Quand la Partie 1 est stable, vous pouvez evoluer sans casser l'architecture.
+Quand la Partie 1 est stable, vous pouvez evoluer sans casser l'architecture (sur une nouvelle branche).
 
 1. Installer Drizzle :
 
