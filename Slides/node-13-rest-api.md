@@ -104,7 +104,7 @@ Bon style :
 - `/movies/:id`
 - `/movies/:id/screenings`
 
-À éviter :
+À éviter de préciser l'action dans l'URL
 - `/getMovies`
 - `/createMovie`
 
@@ -147,7 +147,7 @@ Le terme correct est **RESTful** :
 - ressources bien modélisées
 - verbes HTTP cohérents
 - statuts HTTP cohérents
-- API stateless (pas d'état de session conservée entre deux états, la requête contient l'informatio)
+- API stateless (pas d'état de session conservée entre deux états, la requête contient l'information complète)
 
 ---
 
@@ -185,15 +185,26 @@ Donc :
 
 ---
 
-# `DELETE` et idempotence
+# `DELETE` et idempotence 
 
 `DELETE /movies/:id`
 - supprime la ressource
 - réponse fréquente : `204 No Content`
 
-Idempotence :
+Idempotence (voir la définition dans la slide suivante) :
 - `PUT` et `DELETE` sont idempotents
 - `POST` ne l'est généralement pas
+
+---
+
+# Idempotence
+
+- Idempotence = même effet sur l’état serveur, pas forcément même réponse exacte.
+- Exemple GET /movies/1 est en général idempotent (pas d’effet de bord).
+- Exemple DELETE /movies/1 est idempotent sur l’état :
+    - 1re fois: supprime
+    - 2e fois: rien à supprimer (état final identique : ressource absente)
+    - la réponse peut changer (204 puis 404), tout en restant idempotent.
 
 ---
 
@@ -207,6 +218,22 @@ Idempotence :
 - `409 Conflict` : conflit métier/unicité
 - `422 Unprocessable Entity` : validation métier
 - `500 Internal Server Error` : erreur serveur
+
+---
+
+# `409` vs `422` (important)
+
+- `409 Conflict`
+  - la requête est valide, mais entre en conflit avec l'état actuel
+  - ex Movie : on tente de créer une séance déjà existante (même film, salle, horaire)
+
+- `422 Unprocessable Entity`
+  - JSON correct, mais règles métier non respectées
+  - ex Movie : `durationMinutes <= 0` ou `title` vide
+
+Mémo :
+- `409` = conflit avec **ce qui existe déjà**
+- `422` = données **mal valides métier**
 
 ---
 
