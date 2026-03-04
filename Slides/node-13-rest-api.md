@@ -55,7 +55,7 @@ Exemples de ressources :
   Chaque requête est autonome.  
   Ex: `GET /movies/1/screenings` 
 
-- Le serveur n'a pas besoin de “se souvenir” d'une requête précédente pour traiter la
+- Le serveur n'a pas besoin de "se souvenir" d'une requête précédente pour traiter la
 suivante.
 - Chaque requête apporte ce qu'il faut (URL, params, body, headers/token).
 
