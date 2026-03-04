@@ -19,8 +19,6 @@ title: "Node.js — 13 Théorie API REST"
 - Maîtriser les verbes HTTP d'une API
 - Choisir les bons status codes
 
-On pose la base avant l'implémentation Drizzle.
-
 ---
 
 # API REST : idée centrale
@@ -32,22 +30,48 @@ Exemples de ressources :
 - `screenings`
 - `users`
 
-Chaque ressource a une URL stable et des représentations JSON.
+>Chaque ressource a une URL stable et des représentations JSON.
 
 ---
 
-# Contraintes REST (version utile)
+# Contraintes REST 
 
 - **Client/Serveur** : responsabilités séparées
 - **Stateless** : chaque requête porte son contexte
 - **Cacheable** : certaines réponses peuvent être cachées
 - **Uniform Interface** : conventions HTTP cohérentes
 
-En pratique : API prévisible pour front, mobile, partenaires.
+>En pratique : API prévisible pour front, mobile, partenaires.
 
 ---
 
-# Modéliser les URLs
+# Contraintes REST  1/2
+
+- **Client/Serveur**  
+  Le front affiche et appelle l'API.  
+  L'API contient la logique métier et l'accès DB.
+
+- **Stateless**  
+  Chaque requête est autonome.  
+  Ex: `GET /movies/1/screenings` 
+
+- Le serveur n'a pas besoin de “se souvenir” d'une requête précédente pour traiter la
+suivante.
+- Chaque requête apporte ce qu'il faut (URL, params, body, headers/token).
+
+# Contraintes REST 2/2
+
+- **Cacheable**  
+  Certaines réponses peuvent être réutilisées un moment.  
+  Ex: `GET /movies` peut être mis en cache.
+
+- **Uniform Interface**  
+  Même conventions partout : ressources, verbes, status codes.  
+  Ex: `GET /movies`, `POST /movies`, `DELETE /movies/:id`.
+
+---
+
+# Modéliser les URLs 
 
 Bon style :
 - `/movies`
@@ -58,11 +82,25 @@ Bon style :
 - `/getMovies`
 - `/createMovie`
 
-L'action vient du verbe HTTP, pas du chemin.
+>L'action vient du verbe HTTP, pas du chemin.
 
 ---
 
-# Les verbes HTTP (intention)
+# Pourquoi c'est important pour la documentation
+
+Une URL bien modélisée :
+- rend l'API plus lisible
+- simplifie la documentation
+- rend les tests plus simples à écrire
+- accélère l'intégration front/mobile
+
+Règle simple :
+- URL = ressource
+- verbe HTTP = intention
+
+---
+
+# Les verbes HTTP 
 
 - `GET` : lire
 - `POST` : créer
@@ -70,7 +108,30 @@ L'action vient du verbe HTTP, pas du chemin.
 - `PATCH` : modifier partiellement
 - `DELETE` : supprimer
 
-Une API REST sérieuse utilise ces verbes correctement.
+>Une API REST sérieuse utilise ces verbes correctement.
+
+---
+
+# API REST full vs "RESTful" 1/2
+
+Dans la pratique, on entend souvent REST full.
+
+Le terme correct est **RESTful** :
+- API qui suit les principes REST
+- ressources bien modélisées
+- verbes HTTP cohérents
+- statuts HTTP cohérents
+- API stateless (pas d'état de session conservée entre deux états, la requête contient l'informatio)
+
+---
+
+# API REST full vs "RESTful" 2/2
+
+Donc :
+- REST full = expression courante
+- **RESTful** = terme précis
+
+>Vous pouvez utiliser les deux.
 
 ---
 
@@ -110,7 +171,7 @@ Idempotence :
 
 ---
 
-# Status codes à maîtriser
+# Status codes à maîtriser / utiliser 
 
 - `200 OK` : succès standard
 - `201 Created` : création
@@ -135,7 +196,7 @@ Exemple :
 }
 ```
 
-Le front doit pouvoir traiter les erreurs sans heuristique.
+>Le front doit traiter les erreurs via status codes + codes d'erreur documentés.
 
 ---
 
@@ -146,7 +207,7 @@ Sur `GET /movies` :
 - tri : `?sort=title&order=asc`
 - pagination : `?page=2&limit=20`
 
-Toujours documenter les paramètres.
+>Toujours documenter les paramètres.
 
 ---
 
@@ -158,7 +219,7 @@ Cette architecture API sert par exemple :
 - back-office : gestion films, salles, tarifs
 - partenaire externe : synchronisation des programmes
 
-Même API, clients differents, contrat HTTP unique.
+>Même API, clients differents, contrat HTTP unique.
 
 ---
 
@@ -171,7 +232,7 @@ Exemple `GET /movies/1/screenings` :
 4. repository mappe vers le type Domain `Screening`
 5. router renvoie `{ ok: true, items }`
 
-Ce flux est simple, testable et maintenable.
+>Ce flux est simple, testable et maintenable.
 
 ---
 
