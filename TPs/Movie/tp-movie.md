@@ -1,48 +1,41 @@
-# TP Movie — API Films & Séances (Node 24 + TypeScript + PostgreSQL)
+# TP Movie — API Films & Seances (Node 24 + TypeScript + PostgreSQL)
 
-Ce TP consiste à construire une mini API HTTP qui expose :
+Ce TP consiste a construire une mini API HTTP qui expose :
 - la liste des films
-- les séances d'un film
+- les seances d'un film
 
-Le but est pédagogique : comprendre une architecture simple et lisible avec une séparation **Domain / Infrastructure / Server**.
+Objectif pedagogique : travailler une architecture simple, lisible, et proche d'une vraie app avec separation **Domain / Infrastructure / Router**.
 
-## Prérequis
+## Prerequis
 
 - Node.js 24
-- Docker + Docker Compose (recommandé pour PostgreSQL)
-- VS Code (recommandé)
+- Docker + Docker Compose
+- VS Code (recommande)
 
 ## Contexte technique
 
 Ce TP se base sur :
 - `node:http` (serveur HTTP natif)
 - `pg` (PostgreSQL)
-- TypeScript (mode strict)
+- TypeScript strict
 
-Les données viennent d'une base PostgreSQL, initialisée par `TPs/Movie/schema.sql`.
+Les donnees viennent d'une base PostgreSQL initialisee par `TPs/Movie/schema.sql`.
 
-## Exécution (recommandé)
+## Regle importante (a respecter)
 
-Le plus simple pour exécuter ce TP est d'utiliser l'environnement `Apps/` (dépendances déjà installées, Docker + Postgres déjà câblés).
+**Partie 1 obligatoire : sans Drizzle.**
 
-Deux options :
+Pendant cette premiere partie, vous utilisez uniquement :
+- `pg.Pool`
+- des repositories SQL parametrises
+- un `router.ts` simple
+- `zod` pour valider les frontieres runtime
 
-1) Travailler directement dans `Apps/src/Movie/` en suivant les étapes ci-dessous.
-2) Copier ce squelette vers `Apps/src/Movie/` puis exécuter :
+Drizzle est une evolution optionnelle en Partie 2.
 
-```bash
-cp -R TPs/Movie/. Apps/src/Movie/
-npm -C Apps run movie
-```
+## Structure imposee
 
-Type-check (dans un second terminal) :
-```bash
-npm -C Apps run typecheck
-```
-
-## Structure imposée
-
-Vous travaillez dans `TPs/Movie/` avec l'arborescence suivante :
+Vous travaillez dans `TPs/Movie/` avec :
 
 - `Domain/`
   - `Movie.ts`
@@ -51,132 +44,347 @@ Vous travaillez dans `TPs/Movie/` avec l'arborescence suivante :
   - `DB.ts`
   - `MovieRepository.ts`
   - `ScreeningRepository.ts`
-- `Server/`
-  - `http.ts` (fourni : `sendJson`, `sendError`)
-- `server.ts` (point d'entrée HTTP)
-- `schema.sql` (fourni)
+- `Validation/`
+  - `env.schema.ts`
+  - `router.schema.ts`
+- `router.ts`
+- `server.ts`
+- `schema.sql`
 
-Règle : **le serveur HTTP ne doit pas contenir de SQL**. Le SQL doit vivre dans les repositories (Infrastructure).
+Regle : **pas de SQL dans le router ni dans server.ts**. Le SQL reste dans `Infrastructure/*Repository.ts`.
 
-## Base de données
+## Schema UML (tables + relations)
 
-1) Démarrer PostgreSQL avec Docker (exemple) :
+![Schema UML tables Movie](./images/movie-schema.png)
+
+## Mise en route (mode application)
+
+1. Lancer les conteneurs :
 
 ```bash
-cd Apps
+cd starter
 docker compose up --build -d
 ```
 
-2) Créer la base de données et les tables + seed :
+La base est creee automatiquement au demarrage du service Postgres via :
+- `starter/docker-compose.yml`
+- variable `POSTGRES_DB: db`
 
-Depuis la racine du dépôt :
-```bash
-docker exec -it cart-postgres psql -U postgres -d postgres -c "CREATE DATABASE cineconnect;"
-
-# migration et seeders 
-docker exec -i cart-postgres psql -U postgres -d cineconnect < TPs/Movie/schema.sql
-```
-
-3) Vérifier rapidement :
+2. Inserer schema + donnees (commande unique) :
 
 ```bash
-docker exec -it cart-postgres psql -U postgres -d cineconnect
+docker exec -i db-postgres-movie psql -U postgres -d db < TPs/Movie/schema.sql
 ```
 
-Puis :
+3. Verifier rapidement en SQL :
+
+```bash
+docker exec -it db-postgres-movie psql -U postgres -d db -c "\\dt"
+docker exec -it db-postgres-movie psql -U postgres -d db -c "select count(*) as movies_count from movies;"
+docker exec -it db-postgres-movie psql -U postgres -d db -c "select id, title from movies order by id asc;"
+docker exec -it db-postgres-movie psql -U postgres -d db -c "select s.id, s.movie_id, r.name as room_name, s.start_time, s.price from screenings s join rooms r on r.id = s.room_id order by s.id asc;"
+```
+
+4. Lancer l'API (depuis `starter/`) :
+
+```bash
+npm run dev
+```
+
+L'API est exposee sur `http://localhost:3001`.
+
+## Plan de realisation conseille (Partie 1)
+
+1. Completer les types Domain.
+2. Completer `Infrastructure/DB.ts` (connexion `Pool`).
+3. Ajouter les schemas Zod (`Validation/`).
+4. Completer `MovieRepository.list()`.
+5. Completer `ScreeningRepository.listByMovieId(movieId)`.
+6. Completer `router.ts` avec `sendJson`, `sendError`, validations, et routes.
+7. Brancher le router dans `server.ts`.
+8. Tester au fur et a mesure avec `curl`.
+
+## 1) Domain : types a definir
+
+### `Domain/Movie.ts`
+
+Type attendu :
+- `id: number`
+- `title: string`
+- `description: string | null`
+- `durationMinutes: number`
+- `rating: string | null`
+- `releaseDate: string | null`
+
+### `Domain/Screening.ts`
+
+Type attendu :
+- `id: number`
+- `movieId: number`
+- `startTime: string`
+- `price: number`
+- `room: { id: number; name: string; capacity: number }`
+
+## 2) Infrastructure : connexion PostgreSQL
+
+Dans `Infrastructure/DB.ts`, creer un `Pool` avec les variables :
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+
+Exemple court :
+
+```ts
+import { Pool } from "pg";
+
+export const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+```
+
+## 2 bis) Validation : place de Zod (obligatoire)
+
+Utiliser Zod a deux endroits precis :
+- `Validation/env.schema.ts` : valider `process.env` au demarrage
+- `Validation/router.schema.ts` : valider les entrees HTTP (params/query/body)
+
+Ne pas utiliser Zod dans les repositories SQL.
+
+Exemple `Validation/env.schema.ts` :
+
+```ts
+import { z } from "zod";
+
+export const EnvSchema = z.object({
+  DB_HOST: z.string().min(1),
+  DB_PORT: z.coerce.number().int().positive(),
+  DB_USER: z.string().min(1),
+  DB_PASSWORD: z.string().min(1),
+  DB_NAME: z.string().min(1),
+});
+```
+
+Exemple `Validation/router.schema.ts` (id de route) :
+
+```ts
+import { z } from "zod";
+
+export const MovieIdSchema = z.coerce.number().int().positive();
+```
+
+## 3) Infrastructure : repositories
+
+### `MovieRepository.list()`
+
+But : retourner tous les films tries par `id`.
+
+Exemple SQL (idee) :
+
 ```sql
-\dt
-select * from movies;
-select * from screenings;
+select
+  id,
+  title,
+  description,
+  duration_minutes as "durationMinutes",
+  rating,
+  release_date::text as "releaseDate"
+from movies
+order by id asc;
 ```
 
-##  Domain : définir les types
+### `ScreeningRepository.listByMovieId(movieId)`
 
-Dans `Domain/` :
+But : retourner les seances d'un film + infos de salle (`rooms`).
 
-1) `Domain/Movie.ts`
-- définir le type `Movie` avec les champs :
-  - `id: number`
-  - `title: string`
-  - `description: string | null`
-  - `durationMinutes: number`
-  - `rating: string | null`
-  - `releaseDate: string | null` (date sous forme `YYYY-MM-DD`)
+Exemple SQL (idee) :
 
-2) `Domain/Screening.ts`
-- définir le type `Screening` avec :
-  - `id: number`
-  - `movieId: number`
-  - `startTime: string` (date-time string)
-  - `price: number`
-  - `room: { id: number; name: string; capacity: number }`
+```sql
+select
+  s.id,
+  s.movie_id as "movieId",
+  s.start_time::text as "startTime",
+  s.price::float8 as "price",
+  r.id as "roomId",
+  r.name as "roomName",
+  r.capacity as "roomCapacity"
+from screenings s
+join rooms r on r.id = s.room_id
+where s.movie_id = $1
+order by s.start_time asc;
+```
 
-Objectif : ces types représentent la forme des données **dans l'application**, indépendamment de Postgres.
+Important : toujours parametrer les entrees utilisateur (`$1`).
 
-## Infrastructure : connexion PostgreSQL
+## 4) Router : routes HTTP (avec exemples courts)
 
-Dans `Infrastructure/DB.ts` :
-- créer et exporter un `Pool` `pg`
-- lire la configuration via variables d'environnement :
-  - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+Routes minimales a implementer :
+- `GET /health` -> `{ ok: true }`
+- `GET /movies` -> `{ ok: true, items: Movie[] }`
+- `GET /movies/:id/screenings` -> `{ ok: true, items: Screening[] }`
+- alias optionnel : `GET /movies/:id/seances`
 
-Rappel : dans `Apps/docker-compose.yml`, ces variables existent déjà côté service `app`.
+### Typage attendu pour le router
 
-## Infrastructure : repositories
+Objectif : **zero `any`** et signatures explicites.
 
-1) `Infrastructure/MovieRepository.ts`
-- créer une classe `MovieRepository`
-- ajouter une méthode `list(): Promise<Movie[]>`
-- requête SQL attendue : `select ... from movies order by id asc`
-- simplification recommandée : caster la date côté SQL :
-  - `release_date::text as "releaseDate"`
+```ts
+import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Pool } from "pg";
+import type { MovieRepository } from "./Infrastructure/MovieRepository.js";
+import type { ScreeningRepository } from "./Infrastructure/ScreeningRepository.js";
 
-2) `Infrastructure/ScreeningRepository.ts`
-- créer une classe `ScreeningRepository`
-- ajouter une méthode `listByMovieId(movieId: number): Promise<Screening[]>`
-- requête SQL attendue : `screenings` join `rooms`, filtrée par `movie_id`
-- simplification recommandée : caster la date côté SQL :
-  - `start_time::text as "startTime"`
+type RouterDeps = {
+  pool: Pool;
+  movies: MovieRepository;
+  screenings: ScreeningRepository;
+};
 
-Important :
-- les requêtes doivent être **paramétrées** (`$1`) pour éviter les injections SQL
-- les types “raw” de rows SQL peuvent rester **privés** dans les repositories
+export async function router(
+  req: IncomingMessage,
+  res: ServerResponse,
+  deps: RouterDeps
+): Promise<void> {
+  // ...
+}
+```
 
-## Server : endpoints HTTP
+### Helpers JSON (dans `router.ts`)
 
-Dans `server.ts` :
+```ts
+function sendJson(res: ServerResponse, status: number, data: unknown): void {
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify(data));
+}
 
-1) Créer un serveur avec `createServer`.
-2) Ajouter un helper minimal :
-   - `const [path] = (req.url ?? "/").split("?", 2)`
-   - `const segments = path.split("/").filter(Boolean)`
-3) Routes à implémenter :
+function sendError(res: ServerResponse, status: number, message: string): void {
+  sendJson(res, status, { ok: false, error: message });
+}
+```
 
-- `GET /health` → `{ ok: true }`
-- `GET /movies` → `{ ok: true, items: Movie[] }`
-- `GET /movies/:id/screenings` → `{ ok: true, items: Screening[] }`
-- alias FR (option) : `GET /movies/:id/seances` → même réponse
+### Parsing de route (idee)
 
-Note : cette approche ignore volontairement les query params pour les routes de base.  
-Si un bonus nécessite des query params, vous pourrez parser `req.url` manuellement (ex: `split("&")`) ou introduire `URLSearchParams` plus tard.
+```ts
+const method = req.method ?? "GET";
+const [path] = (req.url ?? "/").split("?", 2);
+const segments = (path ?? "/").split("/").filter(Boolean);
+```
 
-Erreurs :
-- si `id` est invalide → `400`
-- route inconnue → `404`
-- erreur serveur → `500` (message générique)
+Vous pouvez aussi typer explicitement :
 
-Vous pouvez utiliser `sendJson` et `sendError` depuis `Server/http.ts`.
+```ts
+const method: string = req.method ?? "GET";
+const [path = "/"] = (req.url ?? "/").split("?", 2);
+const segments: string[] = path.split("/").filter(Boolean);
+```
 
-##  Test manuel (curl)
+### Parsing de `movieId` (idee)
+
+```ts
+const movieId = Number(segments[1]);
+if (!Number.isInteger(movieId) || movieId <= 0) {
+  return sendError(res, 400, "Invalid movie id");
+}
+```
+
+Version plus propre (helper type-safe) :
+
+```ts
+function parsePositiveInt(value: string | undefined): number | null {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
+}
+```
+
+Version avec Zod (recommandee) :
+
+```ts
+const parsedMovieId = MovieIdSchema.safeParse(segments[1]);
+if (!parsedMovieId.success) {
+  return sendError(res, 400, "Invalid movie id");
+}
+const movieId = parsedMovieId.data;
+```
+
+### Exemple de branche de route
+
+```ts
+if (method === "GET" && path === "/movies") {
+  const items = await movies.list();
+  return sendJson(res, 200, { ok: true, items });
+}
+```
+
+Erreurs a gerer :
+- `400` : id invalide
+- `404` : route inconnue
+- `500` : erreur serveur (message generique)
+
+Conseil typing : faire retourner `Promise<void>` au router et `void` aux helpers `sendJson/sendError`.
+
+## 5) `server.ts` : brancher le router
+
+Role de `server.ts` : instancier les repos et deleguer au router.
+
+Exemple court :
+
+```ts
+const movies = new MovieRepository(pool);
+const screenings = new ScreeningRepository(pool);
+
+const server = createServer(async (req, res) => {
+  await router(req, res, { pool, movies, screenings });
+});
+```
+
+## Tests manuels (curl)
 
 ```bash
-curl -s http://localhost:3000/health
-curl -s http://localhost:3000/movies
-curl -s http://localhost:3000/movies/1/screenings
+curl -s http://localhost:3001/health
+curl -s http://localhost:3001/movies
+curl -s http://localhost:3001/movies/1/screenings
 ```
 
-## Livrables
+Tests erreur utiles :
 
-- Le code dans `TPs/Movie/` respecte la structure imposée
-- Les endpoints `GET /movies` et `GET /movies/:id/screenings` fonctionnent
-- TypeScript passe en `strict` (sans `any`)
+```bash
+curl -s http://localhost:3001/movies/abc/screenings
+curl -s http://localhost:3001/unknown
+```
+
+## Critere de validation (Partie 1)
+
+- structure des fichiers respectee
+- SQL uniquement dans les repositories
+- Zod utilise pour `env` + entrees `router`
+- endpoints GET fonctionnels
+- retours JSON coherents
+- aucun `any`
+
+---
+
+## Partie 2 (optionnelle) : evolution vers Drizzle
+
+Quand la Partie 1 est stable, vous pouvez evoluer sans casser l'architecture.
+
+1. Installer Drizzle :
+
+```bash
+npm i drizzle-orm
+npm i -D drizzle-kit
+```
+
+2. Ajouter :
+- `Infrastructure/schema.ts`
+- `Infrastructure/drizzle.ts`
+
+3. Migrer les repositories vers Drizzle.
+
+4. Etendre l'API REST :
+- `GET /movies/:id`
+- `POST /movies`
+- `PUT /movies/:id`
+- `PATCH /movies/:id`
+- `DELETE /movies/:id`

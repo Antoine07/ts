@@ -141,14 +141,32 @@ Variables d'environnement. À considérer comme une frontière (strings, potenti
 **HTTP**  
 Protocole de communication web. Une requête a une méthode, une URL, des headers, et parfois un body.
 
+**API REST**  
+Style d'API basé sur des ressources adressées par URL + conventions HTTP (verbes, status codes, stateless).
+
+**Ressource (REST)**  
+Entité métier exposée par l'API (ex: `movies`, `screenings`, `users`).
+
 **Verbes HTTP (méthodes)**  
 `GET` (lire), `POST` (créer/déclencher), `PUT` (remplacer), `PATCH` (modifier partiellement), `DELETE` (supprimer).
 
 **Endpoint / route**  
 Combinaison (méthode + chemin). Exemple : `GET /movies`.
 
+**Router**  
+Composant qui matche (méthode + chemin), valide les entrées, puis délègue au code métier/repository.
+
 **Status code**  
 Code réponse : `200` OK, `201` Created, `400` Bad Request, `404` Not Found, `500` Internal Server Error, etc.
+
+**Stateless**  
+Principe REST : chaque requête contient le contexte nécessaire. Le serveur ne dépend pas d'un état de session implicite.
+
+**Idempotence**  
+Propriété d'une opération qui produit le même effet même répétée plusieurs fois (souvent vrai pour `PUT` et `DELETE`).
+
+**CRUD**  
+Create / Read / Update / Delete : opérations de base d'une API sur une ressource.
 
 **Headers**  
 Métadonnées HTTP (`Content-Type`, `Authorization`, …).
@@ -196,6 +214,30 @@ Définition de tables, colonnes, contraintes, et parfois des données de départ
 **Seed (données d'exemple)**  
 Données insérées pour tester/démontrer le fonctionnement.
 
+**Clé primaire (PK)**  
+Colonne qui identifie de manière unique une ligne (`id`).
+
+**Clé étrangère (FK)**  
+Colonne qui référence la PK d'une autre table (`screenings.movie_id` -> `movies.id`).
+
+**Relation 1-N (one-to-many)**  
+Une ligne de la table A peut être liée à plusieurs lignes de la table B (ex: `movies` -> `screenings`).
+
+**Jointure (JOIN)**  
+Requête SQL qui combine plusieurs tables liées (ex: `screenings` + `rooms`).
+
+**Migration**  
+Versionnement des changements de schéma DB dans le temps (ajout colonne, table, contrainte, etc.).
+
+**ORM (Object-Relational Mapper)**  
+Outil qui aide à manipuler une base relationnelle depuis le code applicatif, avec mapping table/objets/types.
+
+**SQL-first**  
+Approche où le modèle SQL (tables/contraintes/relations) reste la source de vérité.
+
+**Drizzle ORM**  
+ORM TypeScript orienté SQL-first, utilisé dans le cours pour garder un SQL lisible avec typage statique.
+
 ---
 
 ## Docker
@@ -228,6 +270,9 @@ Découpage courant :
 **Repository (pattern)**  
 Objet qui encapsule l'accès aux données (SQL/DB) derrière une API TypeScript (`list()`, `findById()`, …).
 
+**Frontière d'entrée**  
+Point où des données externes entrent dans l'app (HTTP, env, fichiers). C'est l'endroit où l'on valide au runtime (`zod`).
+
 **Injection de dépendances (DI)**  
 Passer les dépendances (ex: repository, storage) en paramètre/constructeur plutôt que les créer “en dur”.
 
@@ -247,4 +292,3 @@ Modifier la structure interne du code sans changer le comportement externe (obje
 
 **Livrable**  
 Ce qui est attendu à la fin d'un TP (fichiers, endpoints, scripts, etc.).
-

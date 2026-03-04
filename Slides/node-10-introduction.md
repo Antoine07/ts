@@ -17,38 +17,38 @@ title: "Node.js — 10 Introduction (Node 24)"
 Cas métier : exposer une API (films / séances) et accéder à une base PostgreSQL.
 
 Objectif :
-- comprendre l’exécution (runtime) : “le programme tourne”
+- comprendre l'exécution (runtime) : “le programme tourne”
 - séparer exécution et typage : “le type-check protège”
 
 ---
 
-# C’est quoi Node.js ?
+# C'est quoi Node.js ?
 
 Node.js est un **runtime JavaScript** :
 - exécute du JavaScript **hors navigateur**
-- s’appuie sur **V8** (moteur JS)
+- s'appuie sur **V8** (moteur JS)
 - fournit des APIs système (fichiers, réseau, processus…)
-- gère l’I/O via **libuv** (modèle asynchrone)
+- gère l'I/O via **libuv** (modèle asynchrone)
 
-Node n’est pas un langage : c’est une plateforme d’exécution.
+Node n'est pas un langage : c'est une plateforme d'exécution.
 
 ---
 
-# Un peu d’historique (repères)
+# Un peu d'historique (repères)
 
 - 2009 : Ryan Dahl présente Node.js (I/O non bloquantes + event loop)
 - npm devient le standard de distribution de packages
 - Node se généralise côté serveur et tooling (scripts, build, CLIs)
 
-Aujourd’hui (Node 24) : environnement moderne (ESM, APIs Web, tooling TS).
+Aujourd'hui (Node 24) : environnement moderne (ESM, APIs Web, tooling TS).
 
 ---
 
 # Runtime vs TypeScript (rappel clé)
 
 TypeScript :
-- vérifie **avant** l’exécution (compile-time)
-- disparaît au runtime (les types n’existent pas)
+- vérifie **avant** l'exécution (compile-time)
+- disparaît au runtime (les types n'existent pas)
 
 Node :
 - exécute du JavaScript
@@ -62,10 +62,10 @@ Conclusion : il faut un workflow (exécution + type-check).
 
 Node exécute JavaScript sur un **thread principal**.
 
-Pour l’I/O (réseau, DB, fichiers) :
+Pour l'I/O (réseau, DB, fichiers) :
 - on déclenche une opération asynchrone
-- le thread JS n’est pas bloqué
-- quand l’I/O termine, Node reprend via callbacks/promesses
+- le thread JS n'est pas bloqué
+- quand l'I/O termine, Node reprend via callbacks/promesses
 
 Résultat : très bon pour des applications **I/O-bound**.
 
@@ -81,7 +81,7 @@ CPU-bound (vigilance) :
 - traitement image/vidéo
 - calculs lourds (parcours massif, crypto, ML)
 
-Quand c’est CPU-bound : envisager workers, queues, ou service dédié.
+Quand c'est CPU-bound : envisager workers, queues, ou service dédié.
 
 ---
 
@@ -111,7 +111,7 @@ Dans ce repo : `type: "module"` → ESM (`import/export`).
 - `node:process` : environnement, arguments, exit codes
 - `node:crypto` : hash, random, signatures
 
-Idée : comprendre les fondamentaux avant d’ajouter un framework.
+Idée : comprendre les fondamentaux avant d'ajouter un framework.
 
 ---
 

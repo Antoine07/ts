@@ -58,6 +58,18 @@ Idée : échouer vite et clairement si la configuration est incomplète.
 
 ---
 
+# Place exacte de `zod` dans l'app
+
+Architecture recommandée :
+- `Validation/env.schema.ts` : valide `process.env`
+- `Validation/router.schema.ts` : valide `params/query/body`
+- `Infrastructure/*Repository.ts` : **pas de zod**, uniquement accès DB
+
+Message clé :
+> Zod valide les frontières d'entrée, pas la logique SQL.
+
+---
+
 # Connexion : un `Pool` unique
 
 ```ts
@@ -97,6 +109,11 @@ await pool.query(`select * from movies where id = ${id}`);
 # Séparer HTTP et SQL : repository
 
 Objectif : éviter un handler HTTP qui fait “tout”.
+
+Donc :
+- `router.ts` -> parse + validation runtime (`zod`) + codes HTTP
+- `repository.ts` -> requêtes SQL paramétrées + mapping Domain
+- `domain/` -> types métier
 
 ```ts
 export type Movie = { id: number; title: string };
@@ -202,6 +219,3 @@ Utile pour Docker / supervision / diagnostics.
 
 ---
 
-# TP (si le temps le permet)
-
-`TPs/Movie/tp-movie.md`

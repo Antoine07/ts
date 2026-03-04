@@ -16,10 +16,10 @@ title: "Node.js — 11 HTTP (node:http)"
 
 - Comprendre requête / réponse HTTP
 - Créer un serveur `node:http` en TypeScript
-- Router “à la main” (méthode + chemin)
+- Router "à la main" (méthode + chemin)
 - Parser simplement `path` et `query`
 
-Cas métier : mini API “films / séances”.
+Cas métier : mini API "films / séances".
 
 ---
 
@@ -135,4 +135,4 @@ Pour `POST/PUT/PATCH`, il faut gérer :
 - limites (taille max)
 - validation runtime (TypeScript ne suffit pas)
 
-On reviendra sur la validation quand on parlera du “monde réel” et de la DB.
+On reviendra sur la validation quand on parlera du "monde réel" et de la DB.

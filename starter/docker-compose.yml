@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: node-ts
+    container_name: node-ts-movie
     volumes:
       - .:/app
       - /app/node_modules
@@ -18,10 +18,11 @@ services:
 
   postgres:
     image: postgres:17-alpine
-    container_name: db-postgres
+    container_name: db-postgres-movie
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      # La base est créée automatiquement au démarrage avec ce nom.
       POSTGRES_DB: db
     ports:
       - "5434:5432"

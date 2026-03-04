@@ -1,13 +1,12 @@
 // Point d’entrée HTTP (à implémenter)
 //
 // Objectif :
-// - GET /movies
-// - GET /movies/:id/screenings
+// - créer le serveur HTTP
+// - déléguer le routage à `router.ts`
 //
 // Utiliser :
 // - `node:http`
-// - `sendJson` / `sendError` depuis `Server/http.ts`
+// - `router` depuis `router.ts`
 // - les repositories depuis `Infrastructure/`
 
 export {};
-

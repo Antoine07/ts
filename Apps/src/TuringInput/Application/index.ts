@@ -67,4 +67,20 @@ async function main() {
     }
 }
 
-main()
+main();
+
+
+(function () {
+
+
+    function add(a: number, b: number) {
+        return a + b
+    }
+
+
+
+    function onDone(cb: (avg: number) => void) {
+        cb("4.2");
+      }
+
+})();
