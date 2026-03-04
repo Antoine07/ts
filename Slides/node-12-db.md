@@ -58,15 +58,115 @@ Idée : échouer vite et clairement si la configuration est incomplète.
 
 ---
 
-# Place exacte de `zod` dans l'app
+# `parse` vs `safeParse` (gestion d'erreur)
+
+`parse(...)` :
+- lève une exception immédiatement
+- pratique si on veut stopper le process au démarrage
+
+`safeParse(...)` :
+- retourne `{ success: true | false }`
+- utile pour formater l'erreur avant de répondre/logguer
+
+---
+
+# Exemple : gérer l'erreur Zod sur `env`
+
+```ts
+const parsedEnv = EnvSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  console.error("Invalid environment configuration");
+  console.error(parsedEnv.error.flatten().fieldErrors);
+  process.exit(1);
+}
+
+export const env = parsedEnv.data;
+```
+
+Effet pratique :
+- message clair au démarrage
+- pas de serveur lancé avec une config cassée
+
+---
+
+# Comment corriger une erreur Zod (méthode)
+
+1. lire le champ en erreur (`DB_PORT`, `DB_NAME`, ...)
+2. vérifier la source (Docker Compose, `.env`, CI)
+3. corriger le type/valeur (ex: `DB_PORT=5432`, pas `"abc"`)
+4. relancer et revalider
+
+Objectif : corriger la cause, pas contourner Zod.
+
+---
+
+# Réflexe rapide (Zod KO)
+
+- lire le champ en erreur
+- corriger la config/entrée
+- relancer
+
+Règle :
+> pas de `as any`, pas de contournement du schéma.
+
+---
+
+# Router : validation simple d'abord (2e année)
+
+Pour une entrée HTTP invalide :
+- `400` si format/paramètre invalide
+- `422` si payload JSON valide mais règles métier invalides
+
+Exemple simple (sans Zod) :
+
+```ts
+const movieId = Number(segments[1]);
+if (!Number.isInteger(movieId) || movieId <= 0) {
+  return sendJson(res, 400, { ok: false, error: "Invalid movie id" });
+}
+```
+
+---
+
+# Place de la validation (version simple)
 
 Architecture recommandée :
-- `Validation/env.schema.ts` : valide `process.env`
-- `Validation/router.schema.ts` : valide `params/query/body`
-- `Infrastructure/*Repository.ts` : **pas de zod**, uniquement accès DB
+- `config.ts` : Zod pour valider `process.env`
+- `router.ts` : checks explicites (`if`, `Number.isInteger`)
+- `Infrastructure/*Repository.ts` : pas de validation, uniquement DB
 
 Message clé :
-> Zod valide les frontières d'entrée, pas la logique SQL.
+> Commencer simple : Zod pour `env`, validations claires dans le router.
+
+---
+
+# Dans TP Movie : usage concret
+
+1. `server.ts` démarre
+2. `Infrastructure/DB.ts` importe `env` (déjà validé par Zod)
+3. `router.ts` valide `movieId` avec un check simple
+4. si validation KO -> `400` / `422`
+5. si validation OK -> appel repository
+
+Donc :
+- Zod au démarrage (config)
+- validation manuelle au router (version cours)
+- repository sans validation
+
+---
+
+# Peut-on organiser les validations autrement ?
+
+Oui, plusieurs options correctes :
+- version simple (ici) : sans dossier `Validation/`
+- version avancée : dossier `Validation/` ou validators par feature
+- version avancée : helper générique `validate(schema, input)`
+
+Règle stable :
+- frontière env -> Zod
+- frontière HTTP -> validation explicite (manuelle puis Zod si besoin)
+- repository SQL -> sans Zod
 
 ---
 
@@ -111,7 +211,7 @@ await pool.query(`select * from movies where id = ${id}`);
 Objectif : éviter un handler HTTP qui fait “tout”.
 
 Donc :
-- `router.ts` -> parse + validation runtime (`zod`) + codes HTTP
+- `router.ts` -> parse + validation des entrées + codes HTTP
 - `repository.ts` -> requêtes SQL paramétrées + mapping Domain
 - `domain/` -> types métier
 
@@ -215,7 +315,6 @@ Utile pour Docker / supervision / diagnostics.
 - Env = frontière → validation runtime
 - `Pool` unique + SQL paramétré
 - Repositories pour séparer HTTP et DB
-- Commencer simple (GET) puis étendre avec validation runtime
+- Commencer simple : Zod sur `env`, checks manuels dans router
 
 ---
-
