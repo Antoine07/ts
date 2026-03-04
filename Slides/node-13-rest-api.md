@@ -73,13 +73,23 @@ suivante.
 
 ---
 
-# Focus : Uniform Interface 
+# Focus : Uniform Interface  1/2
 
 Uniform Interface = une interface HTTP standard et stable :
 - ressource identifiée par URI (`/movies`, `/movies/:id`)
 - action portée par le verbe HTTP (`GET`, `POST`, `DELETE`, ...)
 - messages auto-descriptifs (`status`, headers, body JSON)
 - mêmes conventions d'erreur sur toutes les routes
+
+Un message auto-descriptif veut dire :
+- la réponse suffit à comprendre le résultat, sans contexte caché
+- `404` + `{ "ok": false, "error": "NotFound" }` => ressource absente
+- `200` + `{ "ok": true, "items": [...] }` => requête réussie
+
+---
+
+# Focus : Uniform Interface  2/2
+
 
 Dans Movie :
 - ✅ `GET /movies/1/screenings`
