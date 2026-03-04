@@ -66,7 +66,7 @@ Chaque requête est autonome.<br />
 Ex: <code>GET /movies/1/screenings</code></p>
 </li>
 <li>
-<p>Le serveur n'a pas besoin de “se souvenir” d'une requête précédente pour traiter la<br />
+<p>Le serveur n'a pas besoin de &quot;se souvenir&quot; d'une requête précédente pour traiter la<br />
 suivante.</p>
 </li>
 <li>
@@ -347,11 +347,11 @@ Ex: <code>GET /movies</code>, <code>POST /movies</code>, <code>DELETE /movies/:i
 <p>Besoin front :</p>
 <ul>
 <li>afficher 20 films tries par titre</li>
-<li>filtrer par note age (<code>PG-13</code>, <code>R</code>, ...)</li>
+<li>filtrer les films longs (duree minimale)</li>
 </ul>
 <p>API :</p>
 <ul>
-<li><code>GET /movies?limit=20&amp;sort=title&amp;order=asc&amp;rating=PG-13</code></li>
+<li><code>GET /movies?limit=20&amp;sort=title&amp;order=asc&amp;minDuration=120</code></li>
 </ul>
 <p>Infrastructure :</p>
 <ul>

@@ -6,6 +6,21 @@ Ce TP consiste a construire une mini API HTTP qui expose :
 
 Objectif pedagogique : travailler une architecture simple, lisible, et proche d'une vraie app avec separation **Domain / Infrastructure / Router**.
 
+```txt
+# Commentaire: structure cible pour demarrer rapidement (version simple 2e annee)
+TPs/Movie/
+  Domain/
+    Movie.ts
+    Screening.ts
+  Infrastructure/
+    DB.ts
+    MovieRepository.ts
+    ScreeningRepository.ts
+  router.ts
+  server.ts
+  schema.sql
+```
+
 ## Prerequis
 
 - Node.js 24
@@ -44,9 +59,6 @@ Vous travaillez dans `TPs/Movie/` avec :
   - `DB.ts`
   - `MovieRepository.ts`
   - `ScreeningRepository.ts`
-- `Validation/`
-  - `env.schema.ts`
-  - `router.schema.ts`
 - `router.ts`
 - `server.ts`
 - `schema.sql`
@@ -97,14 +109,13 @@ L'API est exposee sur `http://localhost:3001`.
 
 1. Completer les types Domain.
 2. Completer `Infrastructure/DB.ts` (connexion `Pool`).
-3. Ajouter les schemas Zod (`Validation/`).
-4. Completer `MovieRepository.list()`.
-5. Completer `ScreeningRepository.listByMovieId(movieId)`.
-6. Completer `router.ts` avec `sendJson`, `sendError`, validations, et routes.
-7. Brancher le router dans `server.ts`.
-8. Tester au fur et a mesure avec `curl`.
+3. Completer `MovieRepository.list()`.
+4. Completer `ScreeningRepository.listByMovieId(movieId)`.
+5. Completer `router.ts` avec `sendJson`, `sendError`, validations, et routes.
+6. Brancher le router dans `server.ts`.
+7. Tester au fur et a mesure avec `curl`.
 
-## 1) Domain : types a definir
+##  Domain : types a definir
 
 ### `Domain/Movie.ts`
 
@@ -125,7 +136,7 @@ Type attendu :
 - `price: number`
 - `room: { id: number; name: string; capacity: number }`
 
-## 2) Infrastructure : connexion PostgreSQL
+##  Infrastructure : connexion PostgreSQL
 
 Dans `Infrastructure/DB.ts`, creer un `Pool` avec les variables :
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
@@ -144,15 +155,18 @@ export const pool = new Pool({
 });
 ```
 
-## 2 bis) Validation : place de Zod (obligatoire)
+Exemple de requete `pg` pour demarrer vite :
 
-Utiliser Zod a deux endroits precis :
-- `Validation/env.schema.ts` : valider `process.env` au demarrage
-- `Validation/router.schema.ts` : valider les entrees HTTP (params/query/body)
+```ts
+const result = await pool.query<{ now: string }>("select now() as now");
+console.log(result.rows[0]?.now);
+```
+
+##  Validation : mini exemple Zod (court)
 
 Ne pas utiliser Zod dans les repositories SQL.
 
-Exemple `Validation/env.schema.ts` :
+Exemple simple dans `config.ts` :
 
 ```ts
 import { z } from "zod";
@@ -166,15 +180,17 @@ export const EnvSchema = z.object({
 });
 ```
 
-Exemple `Validation/router.schema.ts` (id de route) :
+Exemple court dans `router.ts` (optionnel au debut) :
 
 ```ts
 import { z } from "zod";
 
-export const MovieIdSchema = z.coerce.number().int().positive();
+const MovieIdSchema = z.coerce.number().int().positive();
+const parsed = MovieIdSchema.safeParse(segments[1]);
+if (!parsed.success) return sendError(res, 400, "Invalid movie id");
 ```
 
-## 3) Infrastructure : repositories
+##  Infrastructure : repositories
 
 ### `MovieRepository.list()`
 
@@ -217,7 +233,7 @@ order by s.start_time asc;
 
 Important : toujours parametrer les entrees utilisateur (`$1`).
 
-## 4) Router : routes HTTP (avec exemples courts)
+##  Router : routes HTTP (avec exemples courts)
 
 Routes minimales a implementer :
 - `GET /health` -> `{ ok: true }`
@@ -324,7 +340,7 @@ Erreurs a gerer :
 
 Conseil typing : faire retourner `Promise<void>` au router et `void` aux helpers `sendJson/sendError`.
 
-## 5) `server.ts` : brancher le router
+##  `server.ts` : brancher le router
 
 Role de `server.ts` : instancier les repos et deleguer au router.
 

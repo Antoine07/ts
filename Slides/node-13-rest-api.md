@@ -293,10 +293,10 @@ Exemple `GET /movies/1/screenings` :
 
 Besoin front :
 - afficher 20 films tries par titre
-- filtrer par note age (`PG-13`, `R`, ...)
+- filtrer les films longs (duree minimale)
 
 API :
-- `GET /movies?limit=20&sort=title&order=asc&rating=PG-13`
+- `GET /movies?limit=20&sort=title&order=asc&minDuration=120`
 
 Infrastructure :
 - router parse query
