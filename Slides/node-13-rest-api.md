@@ -59,6 +59,8 @@ Exemples de ressources :
 suivante.
 - Chaque requête apporte ce qu'il faut (URL, params, body, headers/token).
 
+---
+
 # Contraintes REST 2/2
 
 - **Cacheable**  
@@ -68,6 +70,20 @@ suivante.
 - **Uniform Interface**  
   Même conventions partout : ressources, verbes, status codes.  
   Ex: `GET /movies`, `POST /movies`, `DELETE /movies/:id`.
+
+---
+
+# Focus : Uniform Interface 
+
+Uniform Interface = une interface HTTP standard et stable :
+- ressource identifiée par URI (`/movies`, `/movies/:id`)
+- action portée par le verbe HTTP (`GET`, `POST`, `DELETE`, ...)
+- messages auto-descriptifs (`status`, headers, body JSON)
+- mêmes conventions d'erreur sur toutes les routes
+
+Dans Movie :
+- ✅ `GET /movies/1/screenings`
+- ❌ `/getMovieScreeningsById?id=1`
 
 ---
 
