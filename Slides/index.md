@@ -15,7 +15,7 @@ Dépôt: https://github.com/Antoine07/ts
 
 ---
 
-# Plan 1/3
+# Plan 1/4
 
 - [Contexte de démarrage (Docker + starter)](./00-contexte-demarrage.html)
 - [Introduction : pourquoi TypeScript ?](./01-introduction.html)
@@ -25,7 +25,7 @@ Dépôt: https://github.com/Antoine07/ts
 
 ---
 
-# Plan 2/3
+# Plan 2/4
 
 - [Génériques (intro)](./07-generiques-intro.html)
 - [Contraintes : `extends`](./08-contraintes-extends.html)
@@ -33,7 +33,7 @@ Dépôt: https://github.com/Antoine07/ts
 
 ---
 
-# Plan 3/3
+# Plan 3/4
 
 - [Node.js — Introduction (Node 24)](./node-10-introduction.html)
 - [Node.js — Module `http`](./node-11-http.html)
