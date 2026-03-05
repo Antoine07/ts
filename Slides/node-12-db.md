@@ -219,7 +219,7 @@ await pool.query(`select * from movies where id = ${id}`);
 
 ---
 
-# Séparer HTTP et SQL : repository
+# Séparer HTTP et SQL : repository 1/2
 
 Objectif : éviter un handler HTTP qui fait “tout”.
 
@@ -227,6 +227,11 @@ Donc :
 - `router.ts` -> parse + validation des entrées + codes HTTP
 - `repository.ts` -> requêtes SQL paramétrées + mapping Domain
 - `domain/` -> types métier
+
+---
+
+# Séparer HTTP et SQL : repository 2/2
+
 
 ```ts
 export type Movie = { id: number; title: string };
