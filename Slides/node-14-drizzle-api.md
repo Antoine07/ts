@@ -209,11 +209,6 @@ export const db = drizzle(pool);
 
 # Creer la base sandbox
 
-```bash
-docker compose exec db-postgres-movie-starter psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
-```
-
-Verifier :
 
 ```bash
 docker exec -it db-postgres-movie-starter psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
