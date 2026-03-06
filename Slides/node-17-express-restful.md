@@ -133,11 +133,15 @@ app.use(express.json());
 
 ---
 
-# Middleware JSON (pour bien comprendre)
+# Middleware JSON 
 
 ```ts
 app.use(express.json({ limit: "1mb" }));
 ```
+
+**limit: "1mb" fixe la taille max du body JSON accepté à 1 Mo.**
+
+---
 
 Ce que fait ce middleware :
 - lit le body brut de la requête
