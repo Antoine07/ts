@@ -104,7 +104,7 @@ Bon style :
 - `/movies/:id`
 - `/movies/:id/screenings`
 
-À éviter de préciser l'action dans l'URL
+À éviter ne préciser pas l'action dans l'URL
 - `/getMovies`
 - `/createMovie`
 
@@ -138,9 +138,7 @@ Règle simple :
 
 ---
 
-# API REST full vs "RESTful" 1/2
-
-Dans la pratique, on entend souvent REST full.
+# API "RESTful" 1/2
 
 Le terme correct est **RESTful** :
 - API qui suit les principes REST
@@ -151,13 +149,9 @@ Le terme correct est **RESTful** :
 
 ---
 
-# API REST full vs "RESTful" 2/2
+# API "RESTful" 2/2
 
-Donc :
-- REST full = expression courante
 - **RESTful** = terme précis
-
->Vous pouvez utiliser les deux.
 
 ---
 
@@ -199,9 +193,9 @@ Idempotence (voir la définition dans la slide suivante) :
 
 # Idempotence
 
-- Idempotence = même effet sur l’état serveur, pas forcément même réponse exacte.
-- Exemple GET /movies/1 est en général idempotent (pas d’effet de bord).
-- Exemple DELETE /movies/1 est idempotent sur l’état :
+- Idempotence = même effet sur l'état serveur, pas forcément même réponse exacte.
+- Exemple GET /movies/1 est en général idempotent (pas d'effet de bord).
+- Exemple DELETE /movies/1 est idempotent sur l'état :
     - 1re fois: supprime
     - 2e fois: rien à supprimer (état final identique : ressource absente)
     - la réponse peut changer (204 puis 404), tout en restant idempotent.
@@ -264,7 +258,7 @@ Sur `GET /movies` :
 
 ---
 
-# Cas d'usage (notre infra Movie)
+# Cas d'usage (exemple infra Movie)
 
 Cette architecture API sert par exemple :
 - site web cinema : catalogue + horaires
@@ -289,7 +283,7 @@ Exemple `GET /movies/1/screenings` :
 
 ---
 
-# Cas pratique 1 : page \"Catalogue\"
+# Cas pratique 1 : page "Catalogue"
 
 Besoin front :
 - afficher 20 films tries par titre

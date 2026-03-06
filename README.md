@@ -168,4 +168,28 @@ docker compose exec app pnpm test:run
 
 
 
+### Méthode Docker 
 
+Un projet = un seul gestionnaire de paquets (pnpm ou npm), un seul lockfile, et **toutes les installations faites dans le conteneur.**
+
+### Pourquoi 
+
+Si `/app/node_modules` est un volume Docker, son contenu persiste.
+
+>Installer en local (hors conteneur) ou mélanger npm/pnpm crée vite des conflits.
+
+### Cycle recommandé dans le cas pnpm 
+
+1. Démarrer l'environnement `docker compose up -d`
+2. Installer les dépendances dans le conteneur uniquement `docker compose exec app pnpm install`
+    (ou npm install, mais jamais les deux ...)
+3. Lancer l'application dans le conteneur `docker compose exec app pnpm dev`
+
+### Dépannage si c'est cassé ...
+
+`docker compose down -v && rm -rf node_modules package-lock.json pnpm-lock.yaml && docker compose up -d`
+
+### À ne jamais faire
+
+- npm install ou pnpm install sur la machine hôte pour le projet.
+- Garder package-lock.json et pnpm-lock.yaml en même temps.
