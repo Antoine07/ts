@@ -259,3 +259,61 @@ http://localhost:3000
 http://localhost:3000/health
 http://localhost:3000/db
 ```
+
+---
+
+# Espace Drizzle (lab etudiant)
+
+Un espace dedie est disponible dans :
+
+```txt
+src/sandbox/drizzle/
+```
+
+Commandes utiles dans le conteneur `node-ts-movie` :
+
+```bash
+pnpm install
+pnpm sandbox:drizzle
+```
+
+Ce script execute :
+- une lecture simple de `movies`
+- un `innerJoin` relationnel `movies -> screenings -> rooms`
+
+Config Drizzle Kit :
+- `drizzle.config.ts`
+- schema de lab : `src/sandbox/drizzle/schema.ts`
+
+Base dediee au sandbox :
+- nom : `db_sandbox`
+- creation auto au premier demarrage Postgres via `docker/postgres/init/01-create-sandbox-db.sh`
+
+Si votre volume Postgres existe deja, creez-la manuellement :
+
+```bash
+docker compose exec postgres psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
+```
+
+Verifier les bases presentes :
+
+```bash
+docker compose exec postgres psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
+```
+
+Migration seed ajoutee :
+- `drizzle/0001_seed_movie_data.sql`
+
+Appliquer les migrations :
+
+```bash
+docker compose exec app pnpm exec drizzle-kit migrate --config drizzle.config.ts
+```
+
+Verifier qu'il y a des films :
+
+```bash
+docker compose exec postgres psql -U postgres -d db_sandbox -c "SELECT id, title, rating FROM movies ORDER BY id;"
+docker compose exec postgres psql -U postgres -d db_sandbox -c "SELECT COUNT(*) AS movies_count FROM movies;"
+docker compose exec postgres psql -U postgres -d db_sandbox -c "SELECT m.title, s.start_time, r.name AS room FROM screenings s JOIN movies m ON m.id = s.movie_id JOIN rooms r ON r.id = s.room_id ORDER BY s.start_time;"
+```

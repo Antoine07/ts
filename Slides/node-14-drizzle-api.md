@@ -4,45 +4,115 @@ theme: default
 paginate: true
 class: lead
 header: "[index](https://antoine07.github.io/ts)"
-title: "Node.js — 14 Drizzle ORM pour faire évoluer le TP Movie"
+title: "Node.js — 14 Drizzle ORM (evolution du TP Movie)"
 ---
 
 # 14 — Drizzle ORM
-## Évolution du TP Movie (sans casser l'architecture)
-
-
----
-
-# historique ORM - Object Relation Mapping
-
-Repères rapides :
-- années 2000 : forte adoption des ORM (Hibernate, ActiveRecord, Doctrine)
-- problème visé : éviter le "tout SQL string" dispersé
-- idée : mapper tables/relations vers un modèle manipulable en code
-
-Aujourd'hui :
-- certains ORM sont très abstraits
-- Drizzle est plutôt **SQL-first** et garde le contrôle SQL
-
-`SQL-first` : approche où le modèle SQL (tables, colonnes, contraintes, relations) est la source de vérité, et le code applicatif s'aligne dessus.
+## Faire evoluer le TP Movie sans casser l'architecture
 
 ---
 
-# Pourquoi utiliser un ORM 
+# Objectif du chapitre
 
-Dans une app comme l'application que vous développez `cinéConnect`, un ORM apporte :
+- comprendre l'interet de Drizzle dans notre contexte
+- garder une approche SQL-first et lisible
+- maitriser les relations (`1 -> N`, `N -> 1`) en pratique
+- appliquer une demarche propre : DB, migrations, verification
+
+---
+
+# Comparaison rapide : Drizzle vs Doctrine
+
+- **Drizzle (SQL-first)** : requetes explicites, proche SQL, tres lisible cote DB
+- **Doctrine (Symfony)** : approche entites/objets, plus d'abstraction
+
+Les deux sont valides :
+- Drizzle = controle fin SQL + typage TS
+- Doctrine = confort objet + conventions ORM
+
+---
+
+# Doctrine (Symfony) - many-to-many (ultra court)
+
+```php
+#[ORM\Entity]
+class Movie {
+  #[ORM\ManyToMany(targetEntity: Genre::class, inversedBy: 'movies')]
+  #[ORM\JoinTable(name: 'movie_genre')]
+  private Collection $genres;
+}
+
+#[ORM\Entity]
+class Genre {
+  #[ORM\ManyToMany(targetEntity: Movie::class, mappedBy: 'genres')]
+  private Collection $movies;
+}
+```
+
+Avec Doctrine : on manipule surtout des objets/collections.
+
+---
+
+# Pourquoi Doctrine est interessant (ex SF)
+
+- modele objet naturel pour les equipes Symfony (Entity, Repository)
+- relations chargees via ORM, moins de SQL explicite au depart
+- gains de vitesse sur du CRUD classique avec conventions stables
+
+Comparaison :
+- Doctrine : plus abstrait, plus "objet"
+- Drizzle SQL-first : plus explicite, plus proche du SQL
+
+---
+
+# Bref historique ORM
+
+Repere rapide :
+- annees 2000 : forte adoption des ORM (Hibernate, Doctrine, ActiveRecord)
+- objectif : eviter le SQL string disperse partout
+- principe : mapper tables et relations vers du code
+
+Drizzle aujourd'hui :
+- ORM TypeScript moderne
+- positionnement **SQL-first** (requetes explicites, peu de magie)
+
+---
+
+# SQL-first : en quelques mots
+
+SQL-first veut dire :
+- le modele SQL reste la source de verite
+- le code TypeScript s'aligne sur ce modele
+- on garde visibles les `join`, `where`, `orderBy`
+
+Donc :
+- moins d'erreurs runtime
+- sans masquer la logique relationnelle
+
+---
+
+# Pourquoi Drizzle dans le TP Movie
+
 - typage fort entre DB et TypeScript
-- requêtes composables sans concaténation fragile
-- moins d'erreurs de colonnes/champs renommés
-- migrations et schéma versionnés (quand on active `drizzle-kit`)
-
-Mais :
-- un ORM ne remplace pas la modélisation SQL
-- il faut toujours comprendre vos relations en base
+- requetes composees sans concatenation fragile
+- migrations versionnees avec `drizzle-kit`
+- evolution progressive : on change l'Infra, pas le router
 
 ---
 
-# Relations SQL dans notre contexte du tp du cours 
+# Pourquoi UUID dans ce TP
+
+- evite l'enumeration triviale des IDs (`/movies/1`, `/movies/2`, ...)
+- plus robuste pour exposer des IDs en API publique
+- bon compromis pedagogique pour parler de securite d'exposition
+
+Important :
+- UUID n'est pas une securite complete
+- il faut toujours gerer auth/autorisation
+
+---
+
+# Relations SQL de notre domaine
 
 Tables :
 - `movies`
@@ -53,99 +123,56 @@ Relations :
 - `movies (1) -> (N) screenings` via `screenings.movie_id`
 - `rooms (1) -> (N) screenings` via `screenings.room_id`
 
-Inverse :
-- chaque `screening` appartient à **un** `movie` et **une** `room` (`N -> 1`)
-
 ---
 
-# Schéma visuel des relations
 
-![Relations SQL Movie](./images/orm-relations-simple.png)
-
----
-
-# Traduction pratique dans les endpoints
+# Impact REST direct
 
 `GET /movies`
-- lit la table `movies` seule
+- lit `movies`
 
 `GET /movies/:id/screenings`
 - lit `screenings`
-- joint `rooms` pour enrichir la réponse
-- filtre sur la FK `movie_id`
+- joint `rooms`
+- filtre sur `movie_id`
 
-Le design REST reflète directement le modèle relationnel.
-
----
-
-# Drizzle et les relations 
-
-Niveau 1  :
-- requêtes explicites avec `innerJoin(...)`
-
-Niveau 2  :
-- déclarer les relations Drizzle (`relations(...)`) pour une API
-
-Les deux approches sont correctes ; on commence par le niveau 1.
+Le design REST suit le modele relationnel.
 
 ---
 
-# Abstraction ORM (vue pratique)
+# Installer Drizzle (dans `starter-drizzle/`)
 
-![Abstraction ORM](./images/orm-abstraction-flow.png)
-
----
-
-# Pourquoi cette abstraction aide vraiment ?
-
-- vous gardez des frontières nettes (`router`, validation, DB)
-- vous réduisez la duplication de SQL string dans l'app
-- vous refactorez plus vite (types + schéma)
-- vous gardez un flux de données prévisible pour l'équipe
-
-But concret :
-> accélérer le développement sans perdre la lisibilité SQL.
-
----
-
-# Point de départ du TP Movie
-
-Le TP actuel :
-- `router.ts` gère HTTP
-- `MovieRepository` et `ScreeningRepository` font le SQL
-- `pg.Pool` gère la connexion
-
->Bonne nouvelle : on garde cette structure.
-
----
-
-# Ce qui change avec Drizzle
-
-- On ajoute un schéma typé (`schema.ts`)
-- On crée un client Drizzle (`drizzle.ts`)
-- On réécrit les repositories avec `db.select(...)`
-- Le `router` ne change presque pas
-
->But : faire évoluer le TP, pas le réécrire.
-
----
-
-# Installer Drizzle (dans `starter/`)
+Récupérez le stater sur le dépôt, lancez les conteneurs.
 
 ```bash
-npm i drizzle-orm
-npm i -D drizzle-kit
+pnpm add drizzle-orm
+pnpm add -D drizzle-kit
 ```
 
 ---
 
-# `Infrastructure/schema.ts` 
+# Structure retenue dans ce starter
+
+```txt
+src/
+  db.ts
+  drizzle/
+    schema.ts
+    schema.sql
+  server.ts
+drizzle.config.ts
+drizzle/
+```
+
+---
+
+# `src/drizzle/schema.ts`
 
 ```ts
-import { pgTable, serial, text, integer, date, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, date, timestamp, numeric } from "drizzle-orm/pg-core";
 
 export const movies = pgTable("movies", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
   durationMinutes: integer("duration_minutes").notNull(),
@@ -154,15 +181,15 @@ export const movies = pgTable("movies", {
 });
 
 export const rooms = pgTable("rooms", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey(),
   name: text("name").notNull(),
   capacity: integer("capacity").notNull(),
 });
 
 export const screenings = pgTable("screenings", {
-  id: serial("id").primaryKey(),
-  movieId: integer("movie_id").notNull(),
-  roomId: integer("room_id").notNull(),
+  id: uuid("id").primaryKey(),
+  movieId: uuid("movie_id").notNull(),
+  roomId: uuid("room_id").notNull(),
   startTime: timestamp("start_time").notNull(),
   price: numeric("price", { precision: 6, scale: 2 }).notNull(),
 });
@@ -170,117 +197,213 @@ export const screenings = pgTable("screenings", {
 
 ---
 
-# `Infrastructure/drizzle.ts`
+# `src/db.ts` + client Drizzle
 
 ```ts
+import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { pool } from "./DB.js";
+
+const pool = new Pool({
+  host: "postgres",
+  port: 5432,
+  user: "postgres",
+  password: "postgres",
+  database: "db_sandbox",
+});
 
 export const db = drizzle(pool);
 ```
 
-On réutilise le `Pool` existant du TP.
+---
+
+# Creer la base sandbox
+
+```bash
+docker compose exec postgres psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
+```
+
+Verifier :
+
+```bash
+docker compose exec postgres psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
+```
 
 ---
 
-# Migration repository `MovieRepository`
+# Configurer `drizzle.config.ts`
 
-Avant (SQL brut) :
-- `pool.query(...)`
+```ts
+import { defineConfig } from "drizzle-kit";
 
-Après (Drizzle) :
+ export default defineConfig({
+    dialect: "postgresql", // SGBD cible : PostgreSQL
+    schema: "./src/drizzle/schema.ts", // Fichier TS qui décrit les tables
+    out: "./drizzle", // Dossier de sortie des migrations SQL générées
+    dbCredentials: {
+      host: "postgres", // Hôte DB (nom du service Docker Compose)
+      port: 5432, // Port PostgreSQL côté conteneur
+      user: "postgres", // Utilisateur PostgreSQL
+      password: "postgres", // Mot de passe PostgreSQL
+      database: "db_sandbox", // Base de données ciblée
+      ssl: false, // SSL désactivé (en local Docker)
+    },
+  });
+```
+
+---
+
+# Generer puis appliquer la migration
+
+```bash
+pnpm exec drizzle-kit generate --config drizzle.config.ts
+pnpm exec drizzle-kit migrate --config drizzle.config.ts
+```
+
+Verifier les tables :
+
+```bash
+docker compose exec db-postgres-movie-starter psql -U postgres -d db_sandbox -c "\dt"
+```
+
+---
+
+# Inserer des donnees de test 
+
+Avec le fichier SQL du cours :
+
+```bash
+cat src/drizzle/schema.sql | docker exec -i db-postgres-movie-starter psql -v ON_ERROR_STOP=1 -U postgres -d db_sandbox
+```
+
+Verifier :
+
+```bash
+docker exec -it db-postgres-movie-starter psql -U postgres -d db_sandbox -c "SELECT COUNT(*) AS movies_count FROM movies;"
+```
+
+---
+
+# Exemple - lister les films
 
 ```ts
 import { asc } from "drizzle-orm";
-import { db } from "./drizzle.js";
-import { movies } from "./schema.js";
+import { db } from "../db";
+import { movies } from "./schema";
 
 export async function listMovies() {
-  const items = await db
+  return db
     .select()
     .from(movies)
     .orderBy(asc(movies.id));
-
-  return items;
 }
+
+listMovies().then(console.log)
 ```
 
 ---
 
-# Migration repository `ScreeningRepository`
+# Exemple - relation `movie -> screenings -> room`
 
 ```ts
-// ...
-export async function listScreeningsByMovieId(movieId: number) {
-  const rows = await db
+import { eq, asc } from "drizzle-orm";
+import { db } from "../db";
+import { movies, screenings, rooms } from "./schema";
+
+export async function getMovieSchedule(movieId: string) {
+  return db
     .select({
-      id: screenings.id,
-      movieId: screenings.movieId,
+      movieId: movies.id,
+      movieTitle: movies.title,
+      screeningId: screenings.id,
       startTime: screenings.startTime,
-      price: screenings.price,
-      roomId: rooms.id,
       roomName: rooms.name,
-      roomCapacity: rooms.capacity,
     })
-    .from(screenings)
+    .from(movies)
+    .innerJoin(screenings, eq(screenings.movieId, movies.id))
     .innerJoin(rooms, eq(rooms.id, screenings.roomId))
-    .where(eq(screenings.movieId, movieId))
+    .where(eq(movies.id, movieId))
     .orderBy(asc(screenings.startTime));
-
-  return rows;
 }
 ```
 
 ---
 
-Puis on mappe vers le type `Screening` du Domain, voir la slide suivante
-
----
-
-```js
-export async function listScreeningsByMovieId(movieId: number):  Promise<Screening[]>
-{}
-```
-
----
-
-# Déclarer les relations Drizzle
+# Exemple  - compter les seances par film
 
 ```ts
-import { relations } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
+import { db } from "../db";
+import { movies, screenings } from "./schema";
 
-export const moviesRelations = relations(movies, ({ many }) => ({
-  screenings: many(screenings),
-}));
-
-export const screeningsRelations = relations(screenings, ({ one }) => ({
-  movie: one(movies, { fields: [screenings.movieId], references: [movies.id] }),
-  room: one(rooms, { fields: [screenings.roomId], references: [rooms.id] }),
-}));
+export async function listMoviesWithCount() {
+  return db
+    .select({
+      id: movies.id,
+      title: movies.title,
+      screeningsCount: count(screenings.id),
+    })
+    .from(movies)
+    .leftJoin(screenings, eq(screenings.movieId, movies.id))
+    .groupBy(movies.id, movies.title);
+}
 ```
 
->Utile surtout quand l'app grossit (queries relationnelles plus riches).
+---
+
+# Exemple  - creation relationnelle controlee
+
+```ts
+import { eq } from "drizzle-orm";
+import { db } from "../db";
+import { movies, rooms, screenings } from "./schema";
+
+export async function createScreening(input: {
+  movieId: string;
+  roomId: string;
+  startTime: Date;
+  price: string;
+}) {
+  const [movie] = await db.select({ id: movies.id }).from(movies).where(eq(movies.id, input.movieId));
+  const [room] = await db.select({ id: rooms.id }).from(rooms).where(eq(rooms.id, input.roomId));
+  if (!movie || !room) return null;
+
+  const [created] = await db.insert(screenings).values(input).returning();
+  return created;
+}
+```
 
 ---
 
-# Et le router dans tout ça ?
+# Exemple  - filtre temporel sur une relation
 
-Le router reste identique :
-- `GET /movies`
-- `GET /movies/:id/screenings`
-- mêmes codes HTTP
+```ts
+import { eq, gte, and, asc } from "drizzle-orm";
+import { db } from "../db";
+import { screenings } from "./schema";
 
-On change surtout l'Infrastructure.
+export async function listUpcomingScreenings(movieId: string, from: Date) {
+  return db
+    .select()
+    .from(screenings)
+    .where(and(eq(screenings.movieId, movieId), gte(screenings.startTime, from)))
+    .orderBy(asc(screenings.startTime));
+}
+```
 
 ---
 
-# Pattern de structure conseillé
+## Commandes de survi
 
-- `Infrastructure/DB.ts` : `Pool`
-- `Infrastructure/schema.ts` : tables Drizzle
-- `Infrastructure/drizzle.ts` : client Drizzle
-- `Infrastructure/*Repository.ts` : accès données
-- `server.ts` : HTTP routing
-- `router.ts` : routes API
+```bash
+docker exec -it db-postgres-movie-starter psql -U postgres -d db -c "DROP DATABASE IF EXISTS db_sandbox WITH (FORCE);"
 
-Même architecture, outil de DB amélioré.
+docker exec -it db-postgres-movie-starter psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
+
+pnpm exec drizzle-kit generate --config drizzle.config.ts
+pnpm exec drizzle-kit migrate --config drizzle.config.ts
+
+docker exec -it db-postgres-movie-starter psql -U postgres -d db_sandbox -c "SELECT id, title FROM movies;"
+
+docker exec -i db-postgres-movie-starter psql -U postgres -d db_sandbox < schema.sql
+
+```

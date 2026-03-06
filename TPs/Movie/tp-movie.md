@@ -12,6 +12,7 @@ TPs/Movie/
   Domain/
     Movie.ts
     Screening.ts
+    ScreeningService.ts
   Infrastructure/
     DB.ts
     MovieRepository.ts
@@ -61,6 +62,7 @@ Vous travaillez dans le dossier `starter/src` avec :
 - `Domain/`
   - `Movie.ts`
   - `Screening.ts`
+  - `ScreeningService.ts` (petit service de domaine)
 - `Infrastructure/`
   - `DB.ts`
   - `MovieRepository.ts`
@@ -117,9 +119,10 @@ L'API est exposee sur `http://localhost:3001`.
 2. Completer `Infrastructure/DB.ts` (connexion `Pool`).
 3. Completer `MovieRepository.list()`.
 4. Completer `ScreeningRepository.listByMovieId(movieId)`.
-5. Completer `router.ts` avec `sendJson`, `sendError`, validations et routes.
-6. Brancher le router dans `server.ts`.
-7. Tester au fur et a mesure avec `curl` ou Insomnia.
+5. Ajouter la feature guidee `isEvening` (service de domaine + reponse API enrichie).
+6. Completer `router.ts` avec `sendJson`, `sendError`, validations et routes.
+7. Brancher le router dans `server.ts`.
+8. Tester au fur et a mesure avec `curl` ou Insomnia.
 
 ## Domain : types a definir
 
@@ -143,6 +146,47 @@ Type attendu :
 - `room: { id: number; name: string; capacity: number }`
 
 Definition courte : `Screening` = une seance de projection d'un film.
+
+### `Domain/ScreeningService.ts` (exemple court)
+
+Un service de domaine contient une logique metier pure :
+- pas de SQL
+- pas de HTTP
+- pas de `process.env`
+
+Exemple :
+
+```ts
+import type { Screening } from "./Screening.js";
+
+export function isEveningScreening(screening: Screening): boolean {
+  const hour = new Date(screening.startTime).getHours();
+  return hour >= 18;
+}
+```
+
+Usage possible :
+- enrichir une reponse (`isEvening: true/false`)
+- appliquer une regle metier dans la couche Application
+
+## Feature guidee : marquer les seances du soir
+
+Objectif : enrichir la reponse de `GET /movies/:id/screenings` avec un booleen `isEvening`.
+
+1. Implementer `isEveningScreening(screening)` dans `Domain/ScreeningService.ts`.
+2. Dans `router.ts`, apres `listByMovieId(movieId)`, transformer la reponse :
+
+```ts
+const items = await screenings.listByMovieId(movieId);
+const enrichedItems = items.map((item) => ({
+  ...item,
+  isEvening: isEveningScreening(item),
+}));
+
+return sendJson(res, 200, { ok: true, items: enrichedItems });
+```
+
+3. Verifier avec `curl` que `isEvening` apparait bien dans la reponse JSON.
 
 ## Infrastructure : connexion PostgreSQL
 

@@ -1,12 +1,12 @@
 services:
   app:
     build: .
-    container_name: node-ts-movie
+    container_name: node-ts-starter
     volumes:
       - .:/app
       - /app/node_modules
     ports:
-      - "3001:3000"
+      - "3007:3000"
     depends_on:
       - postgres
     environment:
@@ -15,19 +15,26 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: db
+      SANDBOX_DB_HOST: postgres
+      SANDBOX_DB_PORT: 5432
+      SANDBOX_DB_USER: postgres
+      SANDBOX_DB_PASSWORD: postgres
+      SANDBOX_DB_NAME: db_sandbox
 
   postgres:
     image: postgres:17-alpine
-    container_name: db-postgres-movie
+    container_name: db-postgres-movie-starter
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       # La base est créée automatiquement au démarrage avec ce nom.
       POSTGRES_DB: db
+      SANDBOX_DB_NAME: db_sandbox
     ports:
-      - "5434:5432"
+      - "5435:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
 
 volumes:
   pg_data:

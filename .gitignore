@@ -1,10 +1,42 @@
+# Dependencies / package managers
 node_modules/
-dist/
-Corrections/
-.dockerignore
-.DS_Store
-.vscode/
-QCM
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/
 
-starter/
+# Build outputs
+dist/
+**/dist/
+coverage/
+**/coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# OS / editor files
+.DS_Store
+**/.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local docker overrides
+docker-compose.override.yml
+
+# Project-specific folders intentionally ignored
+Corrections/
 Exercices/
+QCM/
+starter-drizzle/
