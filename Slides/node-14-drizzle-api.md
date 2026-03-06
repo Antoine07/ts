@@ -32,7 +32,7 @@ Les deux sont valides :
 
 ---
 
-# Doctrine (Symfony) - many-to-many (ultra court)
+# Doctrine (Symfony) - many-to-many 
 
 ```php
 #[ORM\Entity]
@@ -53,7 +53,7 @@ Avec Doctrine : on manipule surtout des objets/collections.
 
 ---
 
-# Pourquoi Doctrine est interessant (ex SF)
+# Pourquoi Doctrine est interessant
 
 - modele objet naturel pour les equipes Symfony (Entity, Repository)
 - relations chargees via ORM, moins de SQL explicite au depart
@@ -91,20 +91,11 @@ Donc :
 
 ---
 
-# Pourquoi Drizzle dans le TP Movie
-
-- typage fort entre DB et TypeScript
-- requetes composees sans concatenation fragile
-- migrations versionnees avec `drizzle-kit`
-- evolution progressive : on change l'Infra, pas le router
-
----
-
-# Pourquoi UUID dans ce TP
+# Pourquoi UUID 
 
 - evite l'enumeration triviale des IDs (`/movies/1`, `/movies/2`, ...)
 - plus robuste pour exposer des IDs en API publique
-- bon compromis pedagogique pour parler de securite d'exposition
+- Securite d'exposition
 
 Important :
 - UUID n'est pas une securite complete
@@ -142,11 +133,11 @@ Le design REST suit le modele relationnel.
 
 # Installer Drizzle (dans `starter-drizzle/`)
 
-Récupérez le stater sur le dépôt, lancez les conteneurs.
+Récupérez le stater sur le dépôt, lancez les conteneurs. Normalement vous avez tout dans les conteneurs donc, vous pouvez faire un `docker compose [name_conteneur] --build -d
 
 ```bash
 pnpm add drizzle-orm
-pnpm add -D drizzle-kit
+pnpm add -D drizzle-kit  # la cli de Drizzle
 ```
 
 ---
@@ -219,13 +210,13 @@ export const db = drizzle(pool);
 # Creer la base sandbox
 
 ```bash
-docker compose exec postgres psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
+docker compose exec db-postgres-movie-starter psql -U postgres -d db -c "CREATE DATABASE db_sandbox;"
 ```
 
 Verifier :
 
 ```bash
-docker compose exec postgres psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
+docker compose exec db-postgres-movie-starter psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
 ```
 
 ---
