@@ -258,6 +258,14 @@ movieRouter.get("/:id", (req, res) => {
 
 # Query string (`req.query`)
 
+Exemples d'URL :
+- `GET /movies?limit=5`
+- `GET /movies?limit=20`
+
+Dans Express :
+- `req.query.limit` vaut `"5"` ou `"20"` (string)
+- on convertit ensuite en `number`
+
 ```ts
 movieRouter.get("/", (req, res) => {
   const limit = Number(req.query.limit ?? "10");
@@ -268,6 +276,22 @@ movieRouter.get("/", (req, res) => {
   return res.json({ ok: true, limit, items: [] });
 });
 ```
+
+---
+
+## Rappels
+
+ - params = dans le chemin
+    Ex: /movies/42
+    Ici 42 est req.params.id
+  - query string = après ?
+    Ex: /movies?limit=10
+    Ici limit est req.query.limit
+
+  En pratique :
+
+  - params identifient une ressource
+  - query modifie la lecture (filtre, tri, pagination)
 
 ---
 
