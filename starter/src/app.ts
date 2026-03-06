@@ -23,6 +23,6 @@ app.get("/demo/access", validateMinAge, (_req: Request, res: Response) => {
 const port = Number(process.env.PORT ?? 3000);
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Express middleware demo on http://localhost:${port}`);
+  console.log(`Express middleware demo on http://localhost:3007`);
   console.log("Try: GET /demo/access?minAge=18");
 });

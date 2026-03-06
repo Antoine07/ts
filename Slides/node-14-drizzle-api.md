@@ -216,7 +216,7 @@ docker compose exec db-postgres-movie-starter psql -U postgres -d db -c "CREATE 
 Verifier :
 
 ```bash
-docker compose exec db-postgres-movie-starter psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
+docker exec -it db-postgres-movie-starter psql -U postgres -d db -c "SELECT datname FROM pg_database WHERE datname IN ('db', 'db_sandbox');"
 ```
 
 ---

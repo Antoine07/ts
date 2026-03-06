@@ -216,7 +216,7 @@ drizzle/
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">docker compose <span class="hljs-built_in">exec</span> db-postgres-movie-starter psql -U postgres -d db -c <span class="hljs-string">&quot;CREATE DATABASE db_sandbox;&quot;</span>
 </code></pre>
 <p>Verifier :</p>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">docker compose <span class="hljs-built_in">exec</span> db-postgres-movie-starter psql -U postgres -d db -c <span class="hljs-string">&quot;SELECT datname FROM pg_database WHERE datname IN (&#x27;db&#x27;, &#x27;db_sandbox&#x27;);&quot;</span>
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">docker <span class="hljs-built_in">exec</span> -it db-postgres-movie-starter psql -U postgres -d db -c <span class="hljs-string">&quot;SELECT datname FROM pg_database WHERE datname IN (&#x27;db&#x27;, &#x27;db_sandbox&#x27;);&quot;</span>
 </code></pre>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="16" data-paginate="true" data-class="lead" data-header="[index](https://antoine07.github.io/ts)" data-theme="default" lang="C" class="lead" data-marpit-pagination="16" style="--paginate:true;--class:lead;--header:[index](https://antoine07.github.io/ts);--theme:default;" data-marpit-pagination-total="24">
