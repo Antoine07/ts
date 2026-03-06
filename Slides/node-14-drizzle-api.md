@@ -38,7 +38,6 @@ Les deux sont valides :
 #[ORM\Entity]
 class Movie {
   #[ORM\ManyToMany(targetEntity: Genre::class, inversedBy: 'movies')]
-  #[ORM\JoinTable(name: 'movie_genre')]
   private Collection $genres;
 }
 
@@ -65,7 +64,7 @@ Comparaison :
 
 ---
 
-# Bref historique ORM
+# historique - ORM
 
 Repere rapide :
 - annees 2000 : forte adoption des ORM (Hibernate, Doctrine, ActiveRecord)
@@ -91,33 +90,8 @@ Donc :
 
 ---
 
-# Pourquoi UUID 
 
-- evite l'enumeration triviale des IDs (`/movies/1`, `/movies/2`, ...)
-- plus robuste pour exposer des IDs en API publique
-- Securite d'exposition
-
-Important :
-- UUID n'est pas une securite complete
-- il faut toujours gerer auth/autorisation
-
----
-
-# Relations SQL de notre domaine
-
-Tables :
-- `movies`
-- `rooms`
-- `screenings`
-
-Relations :
-- `movies (1) -> (N) screenings` via `screenings.movie_id`
-- `rooms (1) -> (N) screenings` via `screenings.room_id`
-
----
-
-
-# Impact REST direct
+# Impact REST et Drizzle
 
 `GET /movies`
 - lit `movies`
@@ -135,6 +109,8 @@ Le design REST suit le modele relationnel.
 
 Récupérez le stater sur le dépôt, lancez les conteneurs. Normalement vous avez tout dans les conteneurs donc, vous pouvez faire un `docker compose [name_conteneur] --build -d
 
+Ne mélangez jamais `npm` et `pnpm`, sinon vous allez avoir des conflits.
+
 ```bash
 pnpm add drizzle-orm
 pnpm add -D drizzle-kit  # la cli de Drizzle
@@ -142,12 +118,12 @@ pnpm add -D drizzle-kit  # la cli de Drizzle
 
 ---
 
-# Structure retenue dans ce starter
+# Structure dans ce starter-drizzle
 
 ```txt
 src/
   db.ts
-  drizzle/
+  schemas/
     schema.ts
     schema.sql
   server.ts
@@ -245,17 +221,11 @@ pnpm exec drizzle-kit generate --config drizzle.config.ts
 pnpm exec drizzle-kit migrate --config drizzle.config.ts
 ```
 
-Verifier les tables :
-
-```bash
-docker compose exec db-postgres-movie-starter psql -U postgres -d db_sandbox -c "\dt"
-```
-
 ---
 
 # Inserer des donnees de test 
 
-Avec le fichier SQL du cours :
+Depuis votre machine hôte insérer les données.
 
 ```bash
 docker exec -i db-postgres-movie psql -U postgres -d db < src/schema.sql

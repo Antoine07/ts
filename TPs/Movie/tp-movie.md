@@ -96,13 +96,10 @@ La base est creee automatiquement au demarrage du service Postgres via :
 docker exec -i db-postgres-movie psql -U postgres -d db < TPs/Movie/schema.sql
 ```
 
-3. Verifier rapidement en SQL :
+3. Verifier rapidement en SQL 
 
 ```bash
-docker exec -it db-postgres-movie psql -U postgres -d db -c "\\dt"
 docker exec -it db-postgres-movie psql -U postgres -d db -c "select count(*) as movies_count from movies;"
-docker exec -it db-postgres-movie psql -U postgres -d db -c "select id, title from movies order by id asc;"
-docker exec -it db-postgres-movie psql -U postgres -d db -c "select s.id, s.movie_id, r.name as room_name, s.start_time, s.price from screenings s join rooms r on r.id = s.room_id order by s.id asc;"
 ```
 
 4. Lancer l'API (depuis `starter/`) :

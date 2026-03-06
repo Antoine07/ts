@@ -45,13 +45,6 @@ Dépôt: https://github.com/Antoine07/ts
 
 - [Node.js — Théorie API REST (ressources, verbes, statuts)](./node-13-rest-api.html)
 - [Architecture précision](./node-18-architecture-tp-movie.html)
-- [Node.js — Drizzle ORM (évolution du TP Movie)](./node-14-drizzle-api.html)
+- [Node.js — Drizzle ORM ](./node-14-drizzle-api.html)
 - [Node.js - Express et API RESTful (sans CRUD)](./node-17-express-restful.html)
 - [Node.js - Architecture du TP Movie (Domain/Application/Infrastructure)](./node-18-architecture-tp-movie.html)
-- [Node.js — Évolution du TP Movie en CRUD REST complet](./node-15-api-crud.html)
-
----
-
-# Annexe
-
-- [Exécution Node](./00-execution.html)

@@ -53,8 +53,8 @@ src/
 # On peut avoir des services dans `Application`
 
 `Application` est un bon endroit pour :
-- `ListMoviesService`
-- `GetMovieScheduleService`
+- `ListMoviesService` (cas d'usage)
+- `GetMovieScheduleService` (cas d'usage)
 
 Ces services :
 - appellent les repositories
@@ -68,6 +68,8 @@ Ces services :
 Domain Service :
 - regle metier pure, testable sans DB
 - exemple : `isEveningScreening(screening)`
+  - screening = une séance (horaire d'un film)
+  - isEvening = booléen (true/false) selon l'heure
 
 Application Service :
 - enchaine plusieurs operations
@@ -100,7 +102,7 @@ export async function getMovieSchedule(
 
 ---
 
-# Flux d'une requete (movie)
+# Flux d'une requete 
 
 - `router.ts` parse `movieId` et valide
 - appelle `Application/getMovieSchedule`
@@ -189,11 +191,3 @@ export function toScreening(row: ScreeningRow): Screening {
   };
 }
 ```
-
----
-
-# A eviter
-
-- SQL dans `router.ts` ou `server.ts`
-- types metier melanges avec types SQL bruts
-- dossier `types/` unique qui devient "fourre-tout"
