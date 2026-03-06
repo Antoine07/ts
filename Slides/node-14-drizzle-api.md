@@ -258,13 +258,7 @@ docker compose exec db-postgres-movie-starter psql -U postgres -d db_sandbox -c 
 Avec le fichier SQL du cours :
 
 ```bash
-cat src/drizzle/schema.sql | docker exec -i db-postgres-movie-starter psql -v ON_ERROR_STOP=1 -U postgres -d db_sandbox
-```
-
-Verifier :
-
-```bash
-docker exec -it db-postgres-movie-starter psql -U postgres -d db_sandbox -c "SELECT COUNT(*) AS movies_count FROM movies;"
+docker exec -i db-postgres-movie psql -U postgres -d db < src/schema.sql
 ```
 
 ---

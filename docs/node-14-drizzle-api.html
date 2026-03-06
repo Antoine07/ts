@@ -250,10 +250,7 @@ pnpm <span class="hljs-built_in">exec</span> drizzle-kit migrate --config drizzl
 <header><a href="https://antoine07.github.io/ts">index</a></header>
 <h1 id="inserer-des-donnees-de-test">Inserer des donnees de test</h1>
 <p>Avec le fichier SQL du cours :</p>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash"><span class="hljs-built_in">cat</span> src/drizzle/schema.sql | docker <span class="hljs-built_in">exec</span> -i db-postgres-movie-starter psql -v ON_ERROR_STOP=1 -U postgres -d db_sandbox
-</code></pre>
-<p>Verifier :</p>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash">docker <span class="hljs-built_in">exec</span> -it db-postgres-movie-starter psql -U postgres -d db_sandbox -c <span class="hljs-string">&quot;SELECT COUNT(*) AS movies_count FROM movies;&quot;</span>
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-bash"> docker <span class="hljs-built_in">exec</span> -i db-postgres-movie psql -U postgres -d db &lt; src/schema.sql
 </code></pre>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="19" data-paginate="true" data-class="lead" data-header="[index](https://antoine07.github.io/ts)" data-theme="default" lang="C" class="lead" data-marpit-pagination="19" style="--paginate:true;--class:lead;--header:[index](https://antoine07.github.io/ts);--theme:default;" data-marpit-pagination-total="24">
